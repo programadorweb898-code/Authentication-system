@@ -1,24 +1,15 @@
 import { Resend } from 'resend';
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 dotenv.config();
-const resend = new Resend(
-  process.env.RESEND_API_KEY
-);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendRecoveryEmail = async (
-  email,
-  code
-) => {
-
+export const sendRecoveryEmail = async (email, code) => {
   await resend.emails.send({
-
-    from:
-      process.env.RESEND_FROM_EMAIL,
+    from: process.env.RESEND_FROM_EMAIL,
 
     to: email,
 
-    subject:
-      'Código de recuperación',
+    subject: 'Código de recuperación',
 
     html: `
       <h1>Recuperación</h1>
@@ -32,8 +23,6 @@ export const sendRecoveryEmail = async (
       <p>
         Expira en 10 minutos
       </p>
-    `
-
+    `,
   });
-
 };

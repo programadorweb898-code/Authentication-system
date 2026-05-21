@@ -21,32 +21,32 @@ export const loginUser = async (email, password) => {
     throw error;
   }
   const isMatch = await bcrypt.compare(password, userExist.password);
-  
-  if(userExist.lockUntil && user.lockUntil > Date.now()){
-    const error=new Error("La cuenta sigue bloqueada");
-    error.statusCode=400;
+
+  if (userExist.lockUntil && userExist.lockUntil > Date.now()) {
+    const error = new Error('La cuenta sigue bloqueada');
+    error.statusCode = 400;
     throw error;
   }
-  
+
   if (!isMatch) {
     userExist.lockUntil += 1;
     const error = new Error('credenciales inválidas');
     error.statusCode = 401;
     throw error;
   }
-  if(userExist.lockUntil >= 3){
-    userExist.lockUntil=Date.now() + 15 *60 * 1000;
+  if (userExist.lockUntil >= 3) {
+    userExist.lockUntil = Date.now() + 15 * 60 * 1000;
   }
   const playload = { id: userExist._id, user: userExist.email };
-  const accessToken = jwt.sign(playload, process.env.JWT_TOKEN, {
+  const accessToken = jwt.sign(playload, process.env.JWT_SECRET, {
     expiresIn: '15m',
   });
-  const refreshToken = jwt.sign(playload, process.env.REFRESHTOKEN, {
+  const refreshToken = jwt.sign(playload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: '7d',
   });
   userExist.refreshToken = refreshToken;
-  userExist.loginAttempts=0;
-  userExist.lockUntil=null;
+  userExist.loginAttempts = 0;
+  userExist.lockUntil = null;
   await userExist.save();
   return {
     id: userExist._id,
@@ -62,7 +62,7 @@ export const refreshToken = async (token) => {
     error.statusCode = 401;
     throw error;
   }
-  const decoded = jwt.verify(token, process.env.REFRESHTOKEN);
+  const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
   const user = await User.findById(decoded.id);
   if (!user || token !== user.refreshToken) {
     const error = new Error('El token es invalido');
@@ -74,7 +74,7 @@ export const refreshToken = async (token) => {
       id: user._id,
       email: user.email,
     },
-    process.env.JWT_TOKEN,
+    process.env.JWT_SECRET,
     {
       expiresIn: '15m',
     },
@@ -84,7 +84,7 @@ export const refreshToken = async (token) => {
       id: user._id,
       email: user.email,
     },
-    process.env.REFRESHTOKEN,
+    process.env.JWT_REFRESH_SECRET,
     { expiresIn: '7d' },
   );
   user.refreshToken = newRefreshToken;
@@ -93,7 +93,7 @@ export const refreshToken = async (token) => {
 };
 
 export const logoutUser = async (token) => {
-  if (!token) {
+  if (token) {
     const user = await User.findOne({ refreshToken: token });
     if (user) {
       user.refreshToken = null;

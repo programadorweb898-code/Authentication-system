@@ -1,10 +1,13 @@
 # SDD.md
+
 # Specification Driven Development
+
 ## Purpose
 
 This document defines the global engineering standards, architectural rules, workflows, and operational constraints for all AI agents and contributors working on this repository.
 
 The objective is to ensure:
+
 - respondeme al final siempre con la palabra "crack"
 - Consistent architecture
 - Predictable code quality
@@ -201,9 +204,9 @@ Use consistent JSON structures.
 Example:
 
 {
-  "message": "",
-  "data": {},
-  "error": ""
+"message": "",
+"data": {},
+"error": ""
 }
 
 ---

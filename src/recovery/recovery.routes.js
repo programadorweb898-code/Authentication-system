@@ -2,9 +2,13 @@ import { Router } from 'express';
 import {
   recoveryControllers,
   verifyCodeControllers,
-  resetPasswordController
+  resetPasswordController,
 } from './recovery.controllers.js';
-import { recoveryValidation, verifyCodeValidation, passwordValidation } from './recovery.validators.js';
+import {
+  recoveryValidation,
+  verifyCodeValidation,
+  passwordValidation,
+} from './recovery.validators.js';
 import { validationFields } from '../middlewares/validatorFields.js';
 const router = Router();
 

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/user.models.js';
-import {sendRecoverySMS} from "../notifications/sms.services.js";
-import {sendRecoveryEmail} from "../notifications/email.services.js";
+import { sendRecoverySMS } from '../notifications/sms.services.js';
+import { sendRecoveryEmail } from '../notifications/email.services.js';
 
 export const recoveryRequest = async ({ method, email, phone }) => {
   let user;
@@ -27,23 +27,13 @@ export const recoveryRequest = async ({ method, email, phone }) => {
 
   await user.save();
 
-if(method === 'email') {
+  if (method === 'email') {
+    await sendRecoveryEmail(user.email, code);
+  }
 
-  await sendRecoveryEmail(
-    user.email,
-    code
-  );
-
-}
-
-if(method === 'sms') {
-
-  await sendRecoverySMS(
-    user.phone,
-    code
-  );
-
-}
+  if (method === 'sms') {
+    await sendRecoverySMS(user.phone, code);
+  }
 
   return {
     message: 'Enlace de recuperación enviado correctamente',
@@ -52,21 +42,21 @@ if(method === 'sms') {
 
 export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   let user;
-  if (method === 'emaik') {
-    user = User.findOnde({ email });
+  if (method === 'email') {
+    user = await User.findOne({ email });
   }
   if (method === 'sms') {
-    user = User.findOnde({ phone });
+    user = await User.findOne({ phone });
   }
 
   if (!user) {
     const error = new Error('codigo invalido');
-    error.statusCode(400);
+    error.statusCode = 400;
     throw error;
   }
 
-  if (!user.recoveryCode || user.recoveryCodeExpires) {
-    const error = new Error('Bo tiene recuperación activa');
+  if (!user.recoveryCode || !user.recoveryCodeExpires) {
+    const error = new Error('No tiene recuperación activa');
     error.statusCode = 400;
     throw error;
   }
@@ -86,7 +76,7 @@ export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   const isMatch = await bcrypt.compare(code, user.recoveryCode);
   if (!isMatch) {
     user.recoveryAttempts += 1;
-    user.save();
+    await user.save();
     const error = new Error('Código invalido');
     error.statusCode = 400;
     throw error;
@@ -95,91 +85,62 @@ export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   user.recoveryAttempts = 0;
   await user.save();
 
-if(method === 'email') {
-
-  await sendRecoveryEmail(
-    user.email,
-    code
-  );
-
-}
-
-if(method === 'sms') {
-
-  await sendRecoverySMS(
-    user.phone,
-    code
-  );
-
-}
   return {
     message: 'Código verificado correctamente',
   };
 };
 
-export const resetPassword=async(method,phone,email,code,newPassword)=>{
+export const resetPassword = async (
+  method,
+  phone,
+  email,
+  code,
+  newPassword,
+) => {
   let user;
-  if(method === "email"){
-    user=User.findOnde({email});
-  };
-  
-  if(method === "sms"){
-    user=User.findOnde({phone});
-  };
-  
-  if(!user){
-    const error=new Error("Credenciales invalidas");
-    error.statusCode=400;
+  if (method === 'email') {
+    user = await User.findOne({ email });
+  }
+
+  if (method === 'sms') {
+    user = await User.findOne({ phone });
+  }
+
+  if (!user) {
+    const error = new Error('Credenciales invalidas');
+    error.statusCode = 400;
     throw error;
-  };
-  
-  if(!user.recoveryCode || !user.recoveryCodeExpires){
-    const error=new Error("No hay recuepración activa");
-    error.statusCode=400;
+  }
+
+  if (!user.recoveryCode || !user.recoveryCodeExpires) {
+    const error = new Error('No hay recuepración activa');
+    error.statusCode = 400;
     throw error;
-  };
-  
-  if(recoveryCodeExpires < Date.now()){
-    const error=new Error("codigo expirado");
-    error.statusCode=400;
-    throw error
-  };
-  
-  const isMatch=await bcrypt.compare(code,user.recoveryCode);
-  if(!isMatch){
-    const error=new Error("código inval8do");
-    error.statusCode=400;
+  }
+
+  if (user.recoveryCodeExpires < Date.now()) {
+    const error = new Error('codigo expirado');
+    error.statusCode = 400;
     throw error;
-  };
-  
-  user.password=newPassword;
-  
-  user.recoveryCode=null;
-  user.recoveryCodeExpires=null;
-  user.recoveryMethod=null;
-  user.recoveryAttempts=0;
-  user.refreshToken=null;
+  }
+
+  const isMatch = await bcrypt.compare(code, user.recoveryCode);
+  if (!isMatch) {
+    const error = new Error('código inválido');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.password = newPassword;
+
+  user.recoveryCode = null;
+  user.recoveryCodeExpires = null;
+  user.recoveryMethod = null;
+  user.recoveryAttempts = 0;
+  user.refreshToken = null;
   await user.save();
 
-if(method === 'email') {
-
-  await sendRecoveryEmail(
-    user.email,
-    code
-  );
-
-}
-
-if(method === 'sms') {
-
-  await sendRecoverySMS(
-    user.phone,
-    code
-  );
-
-}
-  return{
-    message:"Contraseña actualizada correctamente"
-  }
-  
-}
+  return {
+    message: 'Contraseña actualizada correctamente',
+  };
+};

@@ -1,4 +1,5 @@
 # AGENTS.md
+
 # Backend Multi-Agent Orchestration System
 
 ## Purpose
@@ -119,7 +120,7 @@ domains/recovery/
 
 ### Owns
 
-domains/*/models/
+domains/\*/models/
 
 ---
 
@@ -135,7 +136,7 @@ domains/*/models/
 
 ### Owns
 
-domains/*/validators/
+domains/\*/validators/
 
 ---
 

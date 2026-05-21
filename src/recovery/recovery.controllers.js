@@ -1,4 +1,8 @@
-import { recoveryRequest, verifyRecoveryCode, resetPassword } from './recovery.services.js';
+import {
+  recoveryRequest,
+  verifyRecoveryCode,
+  resetPassword,
+} from './recovery.services.js';
 
 export const recoveryControllers = async (req, res, next) => {
   const { method, email, phone } = req.body;
@@ -20,12 +24,18 @@ export const verifyCodeControllers = async (req, res, next) => {
   }
 };
 
-export const resetPasswordController=async ()=>{
-  const{method,email,phone,code,newPassword}==req.body;
-  try{
-    const result=await resetPassword({method,emaio,phone,code,newPassword})
-    res.json({result});
-  }catch(err){
+export const resetPasswordController = async (req, res, next) => {
+  const { method, email, phone, code, newPassword } = req.body;
+  try {
+    const result = await resetPassword({
+      method,
+      email,
+      phone,
+      code,
+      newPassword,
+    });
+    res.json({ result });
+  } catch (err) {
     next(err);
   }
-}
+};

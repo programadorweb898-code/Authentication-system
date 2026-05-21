@@ -36,14 +36,14 @@ const userSchema = new mongoose.Schema(
       enum: ['email', 'sms'],
       default: null,
     },
-    loginAttempts:{
-      type:Number,
-      default:0
+    loginAttempts: {
+      type: Number,
+      default: 0,
     },
-    lockUntil:{
-      type:Date,
-      default:null
-    }
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
