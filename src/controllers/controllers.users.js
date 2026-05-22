@@ -43,10 +43,10 @@ export const refreshTokenControllers = async (req, res, next) => {
     );
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: false, // Changed to false for local testing if needed, or keep as is.
       sameSite: 'strict',
     });
-    res.json({ accessToken });
+    res.json({ accessToken, refreshToken });
   } catch (err) {
     next(err);
   }
@@ -55,7 +55,7 @@ export const refreshTokenControllers = async (req, res, next) => {
 export const logoutControllers = async (req, res, next) => {
   try {
     await logoutUser(req.cookies.refreshToken);
-    req.clearCookie('refreshToken');
+    res.clearCookie('refreshToken');
     return res.json({ message: 'logout ok' });
   } catch (err) {
     return next(err);

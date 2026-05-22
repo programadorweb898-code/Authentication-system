@@ -1,7 +1,16 @@
 export const errorHandler = (err, req, res, _next) => {
-  if (err.code === 11000) {
-    err.message = 'El usuario ya existe';
-    err.statusCode = 409;
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Error interno del servidor';
+
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Token inválido o expirado';
   }
-  res.status(err.statusCode || 500).json({ error: err.message });
+
+  if (err.code === 11000) {
+    message = 'El usuario ya existe';
+    statusCode = 409;
+  }
+  
+  res.status(statusCode).json({ error: message });
 };

@@ -10,10 +10,15 @@ import {
   passwordValidation,
 } from './recovery.validators.js';
 import { validationFields } from '../middlewares/validatorFields.js';
+import {
+  requestLimiter,
+  verifyLimiter,
+} from '../middlewares/rateLimit.middlewares.js';
 const router = Router();
 
 router.post(
   '/recoveryCode',
+  requestLimiter,
   recoveryValidation,
   validationFields,
   recoveryControllers,
@@ -21,6 +26,7 @@ router.post(
 
 router.post(
   '/verifyCode',
+  verifyLimiter,
   verifyCodeValidation,
   validationFields,
   verifyCodeControllers,
@@ -28,6 +34,7 @@ router.post(
 
 router.post(
   '/reset-password',
+  requestLimiter,
   passwordValidation,
   validationFields,
   resetPasswordController,

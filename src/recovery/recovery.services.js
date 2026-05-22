@@ -50,7 +50,7 @@ export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   }
 
   if (!user) {
-    const error = new Error('codigo invalido');
+    const error = new Error('Código invalido');
     error.statusCode = 400;
     throw error;
   }
@@ -62,7 +62,7 @@ export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   }
 
   if (user.recoveryCodeExpires < Date.now()) {
-    const error = new Error('código expirado');
+    const error = new Error('Código expirado');
     error.statusCode = 400;
     throw error;
   }
@@ -90,13 +90,13 @@ export const verifyRecoveryCode = async ({ method, email, phone, code }) => {
   };
 };
 
-export const resetPassword = async (
+export const resetPassword = async ({
   method,
   phone,
   email,
   code,
   newPassword,
-) => {
+}) => {
   let user;
   if (method === 'email') {
     user = await User.findOne({ email });

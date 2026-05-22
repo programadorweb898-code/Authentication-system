@@ -17,7 +17,7 @@ export const recoveryControllers = async (req, res, next) => {
 export const verifyCodeControllers = async (req, res, next) => {
   const { method, phone, email, code } = req.body;
   try {
-    const result = await verifyRecoveryCode(method, phone, email, code);
+    const result = await verifyRecoveryCode({ method, phone, email, code });
     res.json({ message: result });
   } catch (err) {
     next(err);

@@ -6,6 +6,9 @@ const rateLimiter = (max, windowMs) => {
 
     max: max,
 
+    skip: (req) =>
+      process.env.NODE_ENV === 'test' && !req.header('x-test-rate-limit'),
+
     message: {
       error: 'Demasiados intentos, intenta más tarde',
     },

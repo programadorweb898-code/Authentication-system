@@ -24,24 +24,26 @@ export const loginUser = async (email, password) => {
 
   if (userExist.lockUntil && userExist.lockUntil > Date.now()) {
     const error = new Error('La cuenta sigue bloqueada');
-    error.statusCode = 400;
+    error.statusCode = 403;
     throw error;
   }
 
   if (!isMatch) {
-    userExist.lockUntil += 1;
-    const error = new Error('credenciales inválidas');
+    userExist.loginAttempts += 1;
+    if (userExist.loginAttempts >= 3) {
+      userExist.lockUntil = Date.now() + 15 * 60 * 1000;
+    }
+    await userExist.save();
+    const error = new Error('Credenciales incorrectas');
     error.statusCode = 401;
     throw error;
   }
-  if (userExist.lockUntil >= 3) {
-    userExist.lockUntil = Date.now() + 15 * 60 * 1000;
-  }
-  const playload = { id: userExist._id, user: userExist.email };
-  const accessToken = jwt.sign(playload, process.env.JWT_SECRET, {
+  
+  const payload = { id: userExist._id, email: userExist.email };
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: '15m',
   });
-  const refreshToken = jwt.sign(playload, process.env.JWT_REFRESH_SECRET, {
+  const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: '7d',
   });
   userExist.refreshToken = refreshToken;
@@ -51,14 +53,14 @@ export const loginUser = async (email, password) => {
   return {
     id: userExist._id,
     email: userExist.email,
-    token: accessToken,
+    accessToken: accessToken,
     refreshToken,
   };
 };
 
 export const refreshToken = async (token) => {
   if (!token) {
-    const error = new Error('no sutorizado');
+    const error = new Error('No autorizado');
     error.statusCode = 401;
     throw error;
   }
@@ -88,7 +90,7 @@ export const refreshToken = async (token) => {
     { expiresIn: '7d' },
   );
   user.refreshToken = newRefreshToken;
-  user.save();
+  await user.save();
   return { accessToken: newToken, refreshToken: newRefreshToken };
 };
 
