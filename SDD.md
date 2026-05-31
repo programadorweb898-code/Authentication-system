@@ -311,6 +311,7 @@ Agents must:
 - prefer explicit code
 - avoid premature optimization
 - avoid unnecessary dependencies
+- NOT install packages or dependencies automatically. All necessary installations must be requested to the user for manual execution.
 
 Agents must not:
 
@@ -318,6 +319,41 @@ Agents must not:
 - introduce breaking changes silently
 - bypass validation layers
 - bypass service boundaries
+- automatically execute tests or linting; instead, agents must ask the user to execute these tasks manually.
+
+---
+
+# Infrastructure and Deployment Standards
+
+## Containerization
+
+The application must be containerized using Docker.
+
+Required files:
+
+- `Dockerfile`: Multi-stage build for production optimization.
+- `docker-compose.yml`: Definition of the full stack for local development.
+- `.dockerignore`: Exclusion of unnecessary build context.
+
+## CI/CD Pipeline
+
+All code must pass through an automated CI pipeline before merging.
+
+The pipeline must:
+
+- Run linting checks.
+- Run automated tests using service containers (MongoDB, Redis).
+- Cache dependencies for performance.
+
+Deployment (CD):
+
+- Preferred platforms: Render or Railway.
+- Triggered automatically on push to `main`.
+- Must include health checks.
+
+## Health Checks
+
+Services must expose health check endpoints for orchestrators to monitor availability.
 
 ---
 

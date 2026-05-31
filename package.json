@@ -27,9 +27,13 @@
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "resend": "^6.12.3",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "twilio": "^6.0.2",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -37,6 +41,7 @@
     "eslint": "^10.3.0",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
+    "jest-resolver-enhanced": "^1.1.0",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.3",

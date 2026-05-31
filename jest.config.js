@@ -7,7 +7,5 @@ export default {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
+  resolver: 'jest-resolver-enhanced',
 };

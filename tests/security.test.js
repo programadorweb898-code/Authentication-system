@@ -15,14 +15,14 @@ describe('Security and Validation', () => {
       // 5 requests allowed
       for (let i = 0; i < 5; i++) {
         await request(app)
-          .post('/api/register')
+          .post('/api/auth/register')
           .set('x-test-rate-limit', 'true')
           .send(registerData);
       }
 
       // 6th request should be blocked
       const res = await request(app)
-        .post('/api/register')
+        .post('/api/auth/register')
         .set('x-test-rate-limit', 'true')
         .send(registerData);
       expect(res.status).toBe(429);
@@ -32,14 +32,14 @@ describe('Security and Validation', () => {
 
   describe('JWT Validation', () => {
     it('should fail with no token on protected routes', async () => {
-      const res = await request(app).get('/api/me');
+      const res = await request(app).get('/api/auth/me');
       expect(res.status).toBe(401);
-      expect(res.body.error).toBe('No se proporcionó un token');
+      expect(res.body.error).toBe('No se proporcionó un token de acceso');
     });
 
     it('should fail with invalid token', async () => {
       const res = await request(app)
-        .get('/api/me')
+        .get('/api/auth/me')
         .set('Authorization', 'Bearer invalid_token');
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Token inválido o expirado');
@@ -51,7 +51,7 @@ describe('Security and Validation', () => {
       const token = jwt.default.sign({ id: user._id }, process.env.JWT_SECRET);
 
       const res = await request(app)
-        .get('/api/me')
+        .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -61,8 +61,8 @@ describe('Security and Validation', () => {
 
   describe('Validation Errors', () => {
     it('should return 400 with detailed errors for invalid registration', async () => {
-       const res = await request(app)
-        .post('/api/register')
+      const res = await request(app)
+        .post('/api/auth/register')
         .send({ email: 'wrong', password: '123', confirmPassword: '123' });
 
       expect(res.status).toBe(400);

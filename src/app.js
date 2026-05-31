@@ -1,18 +1,22 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import routerUser from './routes/routes.users.js';
-import reset from './recovery/recovery.routes.js';
+import authRoutes from './domains/auth/routes/auth.routes.js';
+import recoveryRoutes from './domains/recovery/routes/recovery.routes.js';
+import productsRoutes from './domains/products/routes/products.routes.js';
+import usersRoutes from './domains/users/routes/users.routes.js';
+import systemSettingsRoutes from './domains/shared/routes/systemSettings.routes.js';
 import morgan from 'morgan';
 import cors from 'cors';
-import { errorHandler } from './middlewares/errors.middlewares.js';
-import { notFound } from './middlewares/notFound.middlewares.js';
+import { errorHandler } from './domains/shared/errors/errors.middlewares.js';
+import { notFound } from './domains/shared/middlewares/notFound.middlewares.js';
+import { maintenanceMiddleware } from './domains/shared/middlewares/maintenance.middlewares.js';
 import dotenv from 'dotenv';
 import { connectDb } from '../config/db.js';
+import passport from '../config/passport.js';
 
 dotenv.config();
 
 // Solo conectar a la DB si no estamos en entorno de test.
-// En test, Jest se encargará de la conexión en el setup global.
 if (process.env.NODE_ENV !== 'test') {
   connectDb();
 }
@@ -22,13 +26,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
+app.use(maintenanceMiddleware);
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.use('/api', routerUser);
-app.use('/recovery', reset);
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/recovery', recoveryRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/admin/settings', systemSettingsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
