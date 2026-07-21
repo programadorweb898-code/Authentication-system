@@ -139,6 +139,17 @@ export const revokeTokenController = async (req, res, next) => {
       error.statusCode = 400;
       throw error;
     }
+
+    // Decodificar el token para verificar propiedad
+    const decoded = jwt.decode(token);
+    
+    // Si no es admin, verificar que el dueño del token es el usuario autenticado
+    if (req.user.role !== 'admin' && decoded?.id !== req.user.id) {
+      const error = new Error('No tienes permiso para revocar este token');
+      error.statusCode = 403;
+      throw error;
+    }
+
     await revokeToken(token);
     return res.status(200).json({ message: 'Token revocado correctamente' });
   } catch (err) {

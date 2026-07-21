@@ -10,6 +10,7 @@ import cors from 'cors';
 import { errorHandler } from './domains/shared/errors/errors.middlewares.js';
 import { notFound } from './domains/shared/middlewares/notFound.middlewares.js';
 import { maintenanceMiddleware } from './domains/shared/middlewares/maintenance.middlewares.js';
+import { requestLogger } from './domains/shared/middlewares/requestLogger.middleware.js';
 import dotenv from 'dotenv';
 import { connectDb } from '../config/db.js';
 import passport from '../config/passport.js';
@@ -28,6 +29,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use(maintenanceMiddleware);
+app.use(requestLogger);
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));

@@ -3,7 +3,7 @@ import { TokenBlacklist } from '../../../../domains/auth/models/tokenBlacklist.m
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { sendRecoveryEmail } from '../../notifications/services/email.services.js';
+import { sendRecoveryEmail, sendWelcomeEmail } from '../../notifications/services/email.services.js';
 import { sendRecoverySMS } from '../../notifications/services/sms.services.js';
 
 dotenv.config();
@@ -181,6 +181,13 @@ export const loginUser = async ({ email, password }) => {
   user.verificationCode = null;
   user.verificationCodeExpires = null;
   await user.save();
+
+  // Envío asíncrono del email de bienvenida
+  if (method === 'email') {
+    sendWelcomeEmail(user.email).catch((err) =>
+      console.error('Error enviando email de bienvenida:', err),
+    );
+  }
 
   return { message: 'Cuenta verificada exitosamente' };
 };

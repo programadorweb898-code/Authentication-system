@@ -13,7 +13,7 @@ export const connectDb = async (retries = 5) => {
     } catch (err) {
       retries -= 1;
       logger.error(
-        `Error en la conexión a la base de datos. Reintentos restantes: ${retries}`,
+        `Error en la conexión a la base de datos:${err.message}. Reintentos restantes: ${retries}`,
         { error: err.message },
       );
       if (retries === 0) {

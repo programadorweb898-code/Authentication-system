@@ -1,8 +1,8 @@
-import { sendEmail } from '../adapters/email/resend.adapter.js';
+import { emailQueue } from '../queues/email.queue.js';
 
 export const sendRecoveryEmail = async (email, code) => {
   try {
-    return await sendEmail({
+    await emailQueue.add('send-recovery-email', {
       to: email,
       subject: 'Código de recuperación',
       html: `
@@ -13,10 +13,28 @@ export const sendRecoveryEmail = async (email, code) => {
       `,
     });
   } catch (error) {
-    console.error('Error al enviar el email de recuperación:', error);
+    console.error('Error al encolar el email de recuperación:', error);
     const customError = new Error(
-      'No se pudo enviar el correo de recuperación',
+      'No se pudo encolar el correo de recuperación',
     );
+    customError.statusCode = 500;
+    throw customError;
+  }
+};
+
+export const sendWelcomeEmail = async (email) => {
+  try {
+    await emailQueue.add('send-welcome-email', {
+      to: email,
+      subject: '¡Bienvenido!',
+      html: `
+        <h1>¡Bienvenido a nuestra plataforma!</h1>
+        <p>Estamos muy felices de tenerte con nosotros.</p>
+      `,
+    });
+  } catch (error) {
+    console.error('Error al encolar el email de bienvenida:', error);
+    const customError = new Error('No se pudo encolar el correo de bienvenida');
     customError.statusCode = 500;
     throw customError;
   }

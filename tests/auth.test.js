@@ -51,15 +51,11 @@ describe('Auth Flow', () => {
 
   describe('POST /api/auth/login', () => {
     it('should login successfully and return tokens', async () => {
-      // Registrar y verificar manualmente para poder loguear
-      await request(app).post('/api/auth/register').send(registerData);
-      const user = await User.findOne({ email: registerData.email });
-      user.isVerified = true;
-      await user.save();
+      const user = await createUser({ isVerified: true });
 
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: registerData.email, password: registerData.password });
+        .send({ email: user.email, password: registerData.password });
 
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('accessToken');
@@ -68,10 +64,7 @@ describe('Auth Flow', () => {
     });
 
     it('should fail with invalid credentials', async () => {
-      await request(app).post('/api/auth/register').send(registerData);
-      const user = await User.findOne({ email: registerData.email });
-      user.isVerified = true;
-      await user.save();
+      await createUser({ email: registerData.email, isVerified: true });
 
       const res = await request(app)
         .post('/api/auth/login')
@@ -84,14 +77,11 @@ describe('Auth Flow', () => {
 
   describe('POST /api/auth/refresh', () => {
     it('should return a new access token using a valid refresh token', async () => {
-      await request(app).post('/api/auth/register').send(registerData);
-      const user = await User.findOne({ email: registerData.email });
-      user.isVerified = true;
-      await user.save();
+      const user = await createUser({ isVerified: true });
 
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: registerData.email, password: registerData.password });
+        .send({ email: user.email, password: registerData.password });
 
       expect(loginRes.status).toBe(201);
       const cookie = loginRes.header['set-cookie'];
@@ -117,11 +107,7 @@ describe('Auth Flow', () => {
 
   describe('POST /api/auth/change-password', () => {
     it('should change password successfully', async () => {
-      // Registrar, verificar y loguear
-      await request(app).post('/api/auth/register').send(registerData);
-      const user = await User.findOne({ email: registerData.email });
-      user.isVerified = true;
-      await user.save();
+      const user = await createUser({ isVerified: true, email: registerData.email });
 
       const loginRes = await request(app)
         .post('/api/auth/login')
@@ -149,17 +135,12 @@ describe('Auth Flow', () => {
       expect(newLoginRes.status).toBe(201);
 
       // Verify that refresh tokens are invalidated
-      const updatedUserAfterChange = await User.findOne({
-        email: registerData.email,
-      });
+      const updatedUserAfterChange = await User.findById(user._id);
       expect(updatedUserAfterChange.refreshTokens).toEqual([]);
     });
 
     it('should fail if current password is incorrect', async () => {
-      await request(app).post('/api/auth/register').send(registerData);
-      const user = await User.findOne({ email: registerData.email });
-      user.isVerified = true;
-      await user.save();
+      await createUser({ isVerified: true, email: registerData.email });
 
       const loginRes = await request(app)
         .post('/api/auth/login')

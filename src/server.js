@@ -1,5 +1,6 @@
 import app from './app.js';
 import logger from '../infrastructure/logger.js';
+import './domains/notifications/workers/email.worker.js';
 
 const PORT = process.env.PORT || 5000;
 
