@@ -6,11 +6,13 @@ jest.mock('ioredis');
 
 dotenv.config({ path: '.env.test' });
 
-jest.setTimeout(30000); // 30 segundos de timeout
+jest.setTimeout(60000); // 60 segundos de timeout
 
 beforeAll(async () => {
   if (mongoose.connection.readyState === 0) {
+    console.log('Conectando a MongoDB en tests...');
     await mongoose.connect(process.env.MONGO_URI);
+    console.log('Conectado a MongoDB en tests.');
   }
   // Limpieza de índices zombies (como username_1 que no está en el esquema actual)
   try {

@@ -1,9 +1,10 @@
 import { Queue, Worker } from 'bullmq';
-import { sendWelcomeEmail } from '@domains/notifications/services/email.services.js';
-import * as resendAdapter from '@domains/notifications/adapters/email/resend.adapter.js';
+import { sendWelcomeEmail } from '../../src/domains/notifications/services/email.services.js';
+import * as resendAdapter from '../../src/domains/notifications/adapters/email/resend.adapter.js';
+import { connection } from '../../infrastructure/redis.js';
 
 // Usamos mocks para el adaptador final, pero dejamos la cola y el worker reales
-jest.mock('@domains/notifications/adapters/email/resend.adapter.js', () => ({
+jest.mock('../../src/domains/notifications/adapters/email/resend.adapter.js', () => ({
   sendEmail: jest.fn().mockResolvedValue({ id: 'mocked-id' }),
 }));
 
@@ -13,16 +14,12 @@ describe('Email Integration', () => {
   const queueName = 'email-notifications'; // Debe coincidir con el worker
 
   beforeAll(async () => {
-    // Configuramos una conexión en memoria o básica para pruebas
-    // En un entorno de test real, bullmq usa redis. Asumiremos que jest puede gestionar esto.
-    queue = new Queue(queueName, { connection: { host: 'localhost', port: 6379 } });
+    queue = new Queue(queueName, { connection });
     
-    // El worker real necesita importar el mismo procesador que src/domains/notifications/workers/email.worker.js
-    // Dado que el worker ya está definido en el archivo, aquí lo importamos para asegurarnos de que corre.
     worker = new Worker(queueName, async (job) => {
         const { to, subject, html } = job.data;
         return await resendAdapter.sendEmail({ to, subject, html });
-    }, { connection: { host: 'localhost', port: 6379 } });
+    }, { connection });
   });
 
   afterAll(async () => {

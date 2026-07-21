@@ -6,7 +6,7 @@ const mockSend = jest.fn();
 jest.mock('resend', () => ({
   Resend: jest.fn().mockImplementation(() => ({
     emails: {
-      send: mockSend,
+      send: (...args) => mockSend(...args),
     },
   })),
 }));

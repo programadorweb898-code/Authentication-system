@@ -1,9 +1,10 @@
-import { Worker } from 'bullmq';
-import { sendRecoverySMS } from '../../src/domains/notifications/services/sms.services.js';
-import * as twilioAdapter from '../../src/domains/notifications/adapters/sms/twilio.adapter.js';
+import { Worker, Queue } from 'bullmq';
+import { sendRecoverySMS } from '@domains/notifications/services/sms.services.js';
+import * as twilioAdapter from '@domains/notifications/adapters/sms/twilio.adapter.js';
+import { connection } from '../../infrastructure/redis.js';
 
 // Mockeamos el adaptador de Twilio
-jest.mock('../../src/domains/notifications/adapters/sms/twilio.adapter.js', () => ({
+jest.mock('@domains/notifications/adapters/sms/twilio.adapter.js', () => ({
   sendSMS: jest.fn().mockResolvedValue({ sid: 'SM123' }),
 }));
 
@@ -12,13 +13,10 @@ describe('SMS Integration', () => {
   const queueName = 'sms-notifications'; // Asumiendo que esta es la cola usada por el worker de SMS
 
   beforeAll(async () => {
-    // Nota: Como no tenemos el código del worker de SMS en el contexto actual, 
-    // asumimos que existe y procesa jobs de tipo 'send-recovery-sms'.
-    // Esto es un ejemplo de cómo se estructuraría.
     worker = new Worker(queueName, async (job) => {
         const { to, body } = job.data;
         return await twilioAdapter.sendSMS({ to, body });
-    }, { connection: { host: 'localhost', port: 6379 } });
+    }, { connection });
   });
 
   afterAll(async () => {
@@ -29,10 +27,7 @@ describe('SMS Integration', () => {
     const phone = '+123456789';
     const code = '654321';
     
-    // Aquí necesitaríamos una Cola de SMS real en el test para encolar el job.
-    // Esto demuestra la lógica de integración.
-    const { Queue } = await import('bullmq');
-    const queue = new Queue(queueName, { connection: { host: 'localhost', port: 6379 } });
+    const queue = new Queue(queueName, { connection });
     await queue.add('send-recovery-sms', { to: phone, body: `Tu código es ${code}` });
     await queue.close();
 

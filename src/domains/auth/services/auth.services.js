@@ -315,6 +315,7 @@ export const changePassword = async (
 
   user.password = newPassword; // El pre-save hook se encarga del hashing
   user.refreshTokens = []; // Invalidamos todas las sesiones anteriores por seguridad
+  user.markModified('refreshTokens');
   await user.save();
 
   return { message: 'Contraseña actualizada correctamente' };
