@@ -1,21 +1,19 @@
 import { sendEmail } from '@domains/notifications/adapters/email/resend.adapter.js';
 import { Resend } from 'resend';
 
-// Mockeamos la librería resend
+const mockSend = jest.fn();
+
 jest.mock('resend', () => ({
   Resend: jest.fn().mockImplementation(() => ({
     emails: {
-      send: jest.fn(),
+      send: mockSend,
     },
   })),
 }));
 
 describe('Resend Adapter', () => {
-  let mockResend;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockResend = new Resend();
   });
 
   it('should call resend.emails.send with correct parameters', async () => {
@@ -25,11 +23,11 @@ describe('Resend Adapter', () => {
       html: '<h1>Test</h1>'
     };
 
-    mockResend.emails.send.mockResolvedValueOnce({ id: '123' });
+    mockSend.mockResolvedValueOnce({ id: '123' });
 
     await sendEmail(emailData);
 
-    expect(mockResend.emails.send).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,
@@ -38,7 +36,7 @@ describe('Resend Adapter', () => {
   });
 
   it('should throw an error if resend fails', async () => {
-    mockResend.emails.send.mockRejectedValueOnce(new Error('API failure'));
+    mockSend.mockRejectedValueOnce(new Error('API failure'));
 
     await expect(sendEmail({ to: 'test@example.com' })).rejects.toThrow('Failed to send email via Resend');
   });

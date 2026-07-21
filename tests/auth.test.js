@@ -135,7 +135,10 @@ describe('Auth Flow', () => {
       expect(newLoginRes.status).toBe(201);
 
       // Verify that refresh tokens are invalidated
-      const updatedUserAfterChange = await User.findById(user._id);
+      const updatedUserAfterChange = await User.findById(user._id).lean();
+      
+      // La invalidación en el servicio es: user.refreshTokens = []
+      // Con lean(), esto debería ser un array vacío.
       expect(updatedUserAfterChange.refreshTokens).toEqual([]);
     });
 

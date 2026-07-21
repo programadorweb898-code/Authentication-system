@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq';
 import { sendEmail } from '@domains/notifications/adapters/email/resend.adapter.js';
+import { emailWorker } from '../../src/domains/notifications/workers/email.worker.js';
 
 // Mockeamos las dependencias
 jest.mock('bullmq');
@@ -10,11 +11,13 @@ jest.mock('@domains/notifications/adapters/email/resend.adapter.js', () => ({
 describe('Email Worker', () => {
   let workerProcessor;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    
+  beforeAll(() => {
     // Capturamos la función procesadora que el worker recibe al ser instanciado
     workerProcessor = Worker.mock.calls[0][1];
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should call sendEmail with correct job data', async () => {

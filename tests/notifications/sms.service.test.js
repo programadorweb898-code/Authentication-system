@@ -1,9 +1,7 @@
 import { sendRecoverySMS } from '../../src/domains/notifications/services/sms.services.js';
 import { sendSMS } from '../../src/domains/notifications/adapters/sms/twilio.adapter.js';
 
-jest.mock('../../src/domains/notifications/adapters/sms/twilio.adapter.js', () => ({
-  sendSMS: jest.fn(),
-}));
+jest.mock('../../src/domains/notifications/adapters/sms/twilio.adapter.js');
 
 describe('SMS Service', () => {
   afterEach(() => {
