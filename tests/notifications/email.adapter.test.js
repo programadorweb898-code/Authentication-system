@@ -1,4 +1,4 @@
-import { sendEmail } from '../../../src/domains/notifications/adapters/email/resend.adapter.js';
+import { sendEmail } from '@domains/notifications/adapters/email/resend.adapter.js';
 import { Resend } from 'resend';
 
 // Mockeamos la librería resend

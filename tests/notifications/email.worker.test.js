@@ -1,9 +1,9 @@
 import { Worker } from 'bullmq';
-import { sendEmail } from '../../../src/domains/notifications/adapters/email/resend.adapter.js';
+import { sendEmail } from '@domains/notifications/adapters/email/resend.adapter.js';
 
 // Mockeamos las dependencias
 jest.mock('bullmq');
-jest.mock('../../../src/domains/notifications/adapters/email/resend.adapter.js', () => ({
+jest.mock('@domains/notifications/adapters/email/resend.adapter.js', () => ({
   sendEmail: jest.fn(),
 }));
 

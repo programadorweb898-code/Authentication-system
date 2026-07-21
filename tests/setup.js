@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { jest } from '@jest/globals';
 
+jest.mock('ioredis');
+
 dotenv.config({ path: '.env.test' });
 
 jest.setTimeout(30000); // 30 segundos de timeout
