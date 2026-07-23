@@ -127,19 +127,16 @@ describe('Auth Flow', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toContain('actualizada correctamente');
 
+      // Verify that refresh tokens are invalidated
+      const updatedUserAfterChange = await User.findById(user._id).lean();
+      expect(updatedUserAfterChange.refreshTokens).toEqual([]);
+
       // Intentar login con la nueva contraseña
       const newLoginRes = await request(app)
         .post('/api/auth/login')
         .send({ email: registerData.email, password: 'NewPassword123!' });
 
       expect(newLoginRes.status).toBe(201);
-
-      // Verify that refresh tokens are invalidated
-      const updatedUserAfterChange = await User.findById(user._id).lean();
-      
-      // La invalidación en el servicio es: user.refreshTokens = []
-      // Con lean(), esto debería ser un array vacío.
-      expect(updatedUserAfterChange.refreshTokens).toEqual([]);
     });
 
     it('should fail if current password is incorrect', async () => {

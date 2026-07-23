@@ -1,5 +1,4 @@
 import { sendEmail } from '@domains/notifications/adapters/email/resend.adapter.js';
-import { Resend } from 'resend';
 
 const mockSend = jest.fn();
 

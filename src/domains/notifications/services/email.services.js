@@ -23,15 +23,17 @@ export const sendRecoveryEmail = async (email, code) => {
 };
 
 export const sendWelcomeEmail = async (email) => {
+  const jobData = {
+    to: email,
+    subject: '¡Bienvenido!',
+    html: `
+      <h1>¡Bienvenido a nuestra plataforma!</h1>
+      <p>Estamos muy felices de tenerte con nosotros.</p>
+    `,
+  };
+  console.log('--- DEBUG: Llamando emailQueue.add con:', jobData, '---');
   try {
-    await emailQueue.add('send-welcome-email', {
-      to: email,
-      subject: '¡Bienvenido!',
-      html: `
-        <h1>¡Bienvenido a nuestra plataforma!</h1>
-        <p>Estamos muy felices de tenerte con nosotros.</p>
-      `,
-    });
+    await emailQueue.add('send-welcome-email', jobData);
   } catch (error) {
     console.error('Error al encolar el email de bienvenida:', error);
     const customError = new Error('No se pudo encolar el correo de bienvenida');

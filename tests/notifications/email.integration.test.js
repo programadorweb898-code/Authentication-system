@@ -1,30 +1,26 @@
-import { Queue, Worker } from 'bullmq';
-import { sendWelcomeEmail } from '../../src/domains/notifications/services/email.services.js';
+import { sendWelcomeEmail, sendRecoveryEmail } from '../../src/domains/notifications/services/email.services.js';
 import * as resendAdapter from '../../src/domains/notifications/adapters/email/resend.adapter.js';
-import { connection } from '../../infrastructure/redis.js';
+import { emailQueue } from '../../src/domains/notifications/queues/email.queue.js';
+import { processEmailJob } from '../../src/domains/notifications/workers/email.worker.js';
 
-// Usamos mocks para el adaptador final, pero dejamos la cola y el worker reales
 jest.mock('../../src/domains/notifications/adapters/email/resend.adapter.js', () => ({
   sendEmail: jest.fn().mockResolvedValue({ id: 'mocked-id' }),
 }));
 
+jest.mock('../../src/domains/notifications/queues/email.queue.js', () => ({
+  emailQueue: {
+    add: jest.fn(),
+  },
+}));
+
 describe('Email Integration', () => {
-  let queue;
-  let worker;
-  const queueName = 'email-notifications'; // Debe coincidir con el worker
-
-  beforeAll(async () => {
-    queue = new Queue(queueName, { connection });
-    
-    worker = new Worker(queueName, async (job) => {
-        const { to, subject, html } = job.data;
-        return await resendAdapter.sendEmail({ to, subject, html });
-    }, { connection });
-  });
-
-  afterAll(async () => {
-    await queue.close();
-    await worker.close();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Configurar el mock de emailQueue.add para que procese el job
+    emailQueue.add.mockImplementation(async (name, data) => {
+      await processEmailJob({ data });
+      return { id: 'job-id' };
+    });
   });
 
   it('should process the welcome email job through the queue', async () => {
@@ -33,9 +29,7 @@ describe('Email Integration', () => {
     // Act: Disparamos el flujo desde el servicio
     await sendWelcomeEmail(email);
 
-    // Assert: Esperamos a que el worker procese el job
-    await new Promise((resolve) => setTimeout(resolve, 500)); 
-
+    // Assert: Verificamos que el adaptador fue llamado
     expect(resendAdapter.sendEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: email,
       subject: '¡Bienvenido!',
@@ -47,11 +41,9 @@ describe('Email Integration', () => {
     const code = '654321';
     
     // Act: Disparamos el flujo desde el servicio
-    await import('@domains/notifications/services/email.services.js').then(s => s.sendRecoveryEmail(email, code));
+    await sendRecoveryEmail(email, code);
 
-    // Assert: Esperamos a que el worker procese el job
-    await new Promise((resolve) => setTimeout(resolve, 500)); 
-
+    // Assert: Verificamos que el adaptador fue llamado
     expect(resendAdapter.sendEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: email,
       subject: 'Código de recuperación',

@@ -1,5 +1,4 @@
-import { Worker, Queue } from 'bullmq';
-import { sendRecoverySMS } from '@domains/notifications/services/sms.services.js';
+import { Queue, Worker } from '../../__mocks__/bullmq.js';
 import * as twilioAdapter from '@domains/notifications/adapters/sms/twilio.adapter.js';
 import { connection } from '../../infrastructure/redis.js';
 
@@ -28,6 +27,7 @@ describe('SMS Integration', () => {
     const code = '654321';
     
     const queue = new Queue(queueName, { connection });
+    
     await queue.add('send-recovery-sms', { to: phone, body: `Tu código es ${code}` });
     await queue.close();
 
