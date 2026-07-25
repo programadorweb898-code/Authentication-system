@@ -73,6 +73,18 @@ describe('Auth Flow', () => {
       expect(res.status).toBe(401);
       expect(res.body.error.toLowerCase()).toContain('inválidas');
     });
+
+    it('should require MFA if enabled', async () => {
+      const user = await createUser({ isVerified: true, is2FAEnabled: true });
+
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: user.email, password: registerData.password });
+
+      expect(res.status).toBe(200);
+      expect(res.body.mfaRequired).toBe(true);
+      expect(res.body).toHaveProperty('mfaToken');
+    });
   });
 
   describe('POST /api/auth/refresh', () => {

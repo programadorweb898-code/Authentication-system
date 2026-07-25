@@ -15,6 +15,9 @@ import {
   logoutControllers,
   changePasswordController,
   revokeTokenController,
+  setup2FAController,
+  verify2FAController,
+  disable2FAController,
 } from '../controllers/auth.controllers.js';
 import passport from 'passport';
 
@@ -55,6 +58,11 @@ router.post('/refresh', refreshTokenControllers);
 router.post('/logout', logoutControllers);
 
 router.post('/revoke-token', authMiddleware, revokeTokenController);
+
+// MFA routes
+router.post('/2fa/setup', authMiddleware, setup2FAController);
+router.post('/2fa/verify', verify2FAController);
+router.post('/2fa/disable', authMiddleware, disable2FAController);
 
 router.post(
   '/change-password',

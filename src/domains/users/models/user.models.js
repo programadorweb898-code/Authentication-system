@@ -87,6 +87,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    is2FAEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFASecret: {
+      type: String,
+      default: null,
+    },
+    twoFAType: {
+      type: String,
+      enum: ['app', 'sms'],
+      default: 'app',
+    },
   },
   { timestamps: true },
 );

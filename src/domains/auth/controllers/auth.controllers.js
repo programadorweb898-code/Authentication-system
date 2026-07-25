@@ -9,6 +9,7 @@ import {
   googleAuthSuccess,
   changePassword,
   revokeToken,
+  verifyMFA,
 } from '../services/auth.services.js';
 
 export const registerControllers = async (req, res, next) => {
@@ -40,7 +41,17 @@ export const resendVerificationCodeController = async (req, res, next) => {
 
 export const loginControllers = async (req, res, next) => {
   try {
-    const { accessToken, refreshToken, user } = await loginUser(req.body);
+    const result = await loginUser(req.body);
+
+    if (result.mfaRequired) {
+      return res.status(200).json({
+        message: 'MFA requerido',
+        mfaRequired: true,
+        mfaToken: result.mfaToken,
+      });
+    }
+
+    const { accessToken, refreshToken, user } = result;
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -153,6 +164,45 @@ export const revokeTokenController = async (req, res, next) => {
 
     await revokeToken(token);
     return res.status(200).json({ message: 'Token revocado correctamente' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const setup2FAController = async (req, res, next) => {
+  try {
+    return res.status(200).json({ message: 'Setup 2FA endpoint' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const verify2FAController = async (req, res, next) => {
+  try {
+    const { mfaToken, code } = req.body;
+    const { accessToken, refreshToken, user } = await verifyMFA(mfaToken, code);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: 'Login exitoso',
+      accessToken,
+      refreshToken,
+      user,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const disable2FAController = async (req, res, next) => {
+  try {
+    return res.status(200).json({ message: 'Disable 2FA endpoint' });
   } catch (err) {
     return next(err);
   }

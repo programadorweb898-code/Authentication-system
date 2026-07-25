@@ -3,6 +3,7 @@ import { TokenBlacklist } from '../../../../domains/auth/models/tokenBlacklist.m
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import logger from '../../../../infrastructure/logger.js';
 import { sendRecoveryEmail, sendWelcomeEmail } from '../../notifications/services/email.services.js';
 import { sendRecoverySMS } from '../../notifications/services/sms.services.js';
 
@@ -83,6 +84,7 @@ export const loginUser = async ({ email, password }) => {
 
   // 1. Verificar si la cuenta está bloqueada
   if (user.lockUntil && user.lockUntil > Date.now()) {
+    logger.warn('Intento de login en cuenta bloqueada', { email });
     const error = new Error(
       'La cuenta está bloqueada temporalmente por demasiados intentos fallidos',
     );
@@ -106,6 +108,9 @@ export const loginUser = async ({ email, password }) => {
     user.loginAttempts += 1;
     if (user.loginAttempts >= 5) {
       user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // Bloqueo de 30 min
+      logger.warn('Cuenta bloqueada por múltiples intentos fallidos', { email });
+    } else {
+      logger.warn('Intento de login fallido', { email, attempt: user.loginAttempts });
     }
     await user.save();
 
@@ -118,6 +123,32 @@ export const loginUser = async ({ email, password }) => {
   user.loginAttempts = 0;
   user.lockUntil = null;
 
+  // MFA Flow
+  if (user.is2FAEnabled) {
+    const code = generateOTP();
+    user.twoFASecret = await bcrypt.hash(code, 10); // Reutilizamos twoFASecret para guardar el hash del código
+    await user.save();
+
+    // Enviar código (reutilizando métodos existentes)
+    if (user.verificationMethod === 'email') {
+      sendRecoveryEmail(user.email, code).catch((err) =>
+        console.error('Error enviando email 2FA:', err),
+      );
+    } else if (user.phone) {
+      sendRecoverySMS(user.phone, code).catch((err) =>
+        console.error('Error enviando SMS 2FA:', err),
+      );
+    }
+
+    const mfaToken = jwt.sign(
+      { id: user._id, mfaRequired: true },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' },
+    );
+
+    return { mfaRequired: true, mfaToken };
+  }
+
   const { accessToken, refreshToken } = await generateAndStoreTokens(user);
 
   return {
@@ -127,8 +158,43 @@ export const loginUser = async ({ email, password }) => {
       id: user._id,
       email: user.email,
     },
+  };
+  };
+
+  export const verifyMFA = async (mfaToken, code) => {
+  try {
+    const decoded = jwt.verify(mfaToken, process.env.JWT_SECRET);
+    if (!decoded.mfaRequired) {
+      throw new Error('Token inválido');
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user || !user.twoFASecret) {
+      throw new Error('Usuario inválido o MFA no configurado');
+    }
+
+    const isMatch = await bcrypt.compare(code, user.twoFASecret);
+    if (!isMatch) {
+      throw new Error('Código de verificación incorrecto');
+    }
+
+    // Limpiar secreto y generar tokens finales
+    user.twoFASecret = null;
+    await user.save();
+
+    const { accessToken, refreshToken } = await generateAndStoreTokens(user);
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: user._id, email: user.email },
+    };
+  } catch (err) {
+    const error = new Error('Error al verificar MFA: ' + err.message);
+    error.statusCode = 401;
+    throw error;
   }
   };
+
 
   export const googleAuthSuccess = async (user) => {
   if (!user) {
@@ -308,6 +374,7 @@ export const changePassword = async (
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
   if (!isMatch) {
+    logger.warn('Intento fallido de cambio de contraseña', { userId });
     const error = new Error('La contraseña actual es incorrecta');
     error.statusCode = 401;
     throw error;
@@ -317,6 +384,7 @@ export const changePassword = async (
   user.refreshTokens = []; // Invalidamos todas las sesiones anteriores por seguridad
   user.markModified('refreshTokens');
   await user.save();
+  logger.info('Contraseña actualizada correctamente', { userId });
 
   return { message: 'Contraseña actualizada correctamente' };
 };
