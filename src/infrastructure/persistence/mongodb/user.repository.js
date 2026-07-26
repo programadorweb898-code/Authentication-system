@@ -29,6 +29,29 @@ class MongoUserRepository extends UserRepository {
   async save(user) {
     return await user.save();
   }
+
+  async findAll(where = {}, options = {}) {
+    let query = User.find(where);
+    if (options.sort) query = query.sort(options.sort);
+    if (options.select) query = query.select(options.select);
+    return await query.exec();
+  }
+
+  async delete(id) {
+    return await User.findByIdAndDelete(id).exec();
+  }
+
+  async count(where = {}) {
+    return await User.countDocuments(where).exec();
+  }
+
+  async countSince(date) {
+    return await User.countDocuments({ createdAt: { $gte: date } }).exec();
+  }
+
+  async findByGoogleId(googleId) {
+    return await User.findOne({ googleId }).exec();
+  }
 }
 
 export default MongoUserRepository;

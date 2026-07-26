@@ -5,9 +5,76 @@ import { AppDataSource } from '../src/infrastructure/persistence/postgres/data-s
 
 jest.mock('ioredis');
 
+jest.mock('mongoose', () => {
+  const baseUser = {
+    _id: '507f1f77bcf86cd799439011',
+    email: 'user@example.com',
+    phone: null,
+    role: 'user',
+    isBlocked: false,
+    isVerified: true,
+    refreshTokens: [],
+    loginAttempts: 0,
+    save: function () { return Promise.resolve(this); },
+  };
+
+  const mkQuery = (val) => {
+    const resolveVal = typeof val === 'function' ? val() : val;
+    const q = {
+      select: () => q,
+      sort: () => q,
+      lean: () => q,
+      populate: () => q,
+      limit: () => q,
+      skip: () => q,
+      then: (resolve) => resolve(resolveVal),
+      catch: () => q,
+    };
+    return q;
+  };
+
+  return {
+    Schema: Object.assign(function MockSchema() {}, {
+      Types: {
+        ObjectId: 'ObjectId',
+        String: String, Number: Number,
+        Boolean: Boolean, Date: Date,
+        Buffer: Buffer, Mixed: 'Mixed',
+        Decimal128: 'Decimal128', Map: 'Map',
+      },
+      prototype: {
+        pre: () => {}, post: () => {},
+        virtual: () => ({ get: () => {}, set: () => {} }),
+        index: () => {}, plugin: () => {}, add: () => {},
+        path: () => {}, eachPath: () => {}, remove: () => {},
+      },
+    }),
+    Types: {
+      ObjectId: function (id) { return id || '507f1f77bcf86cd799439011'; },
+    },
+    model: () => ({
+      findById: (id) => mkQuery(baseUser),
+      findOne: () => mkQuery(baseUser),
+      findByIdAndUpdate: (id, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
+      findOneAndUpdate: (f, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
+      findByIdAndDelete: () => mkQuery({ deletedCount: 1 }),
+      create: (data) => Promise.resolve({ ...baseUser, ...data }),
+      find: () => mkQuery([baseUser]),
+      deleteOne: () => Promise.resolve({ deletedCount: 1 }),
+      deleteMany: () => Promise.resolve({ deletedCount: 1 }),
+      countDocuments: () => Promise.resolve(1),
+      updateOne: () => Promise.resolve({ modifiedCount: 1 }),
+      aggregate: () => Promise.resolve([]),
+    }),
+    connection: { readyState: 1, collections: {} },
+    connect: () => Promise.resolve(),
+    disconnect: () => Promise.resolve(),
+  };
+});
+
 dotenv.config({ path: '.env.test' });
 
-jest.setTimeout(60000); // 60 segundos de timeout
+jest.setTimeout(60000);
 
 const dbType = process.env.DB_TYPE || 'postgres';
 

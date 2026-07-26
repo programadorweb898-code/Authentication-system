@@ -48,7 +48,7 @@ describe('Security and Validation', () => {
     it('should succeed with valid token', async () => {
       const user = await createUser({ email: 'me@example.com' });
       const jwt = await import('jsonwebtoken');
-      const token = jwt.default.sign({ id: user._id }, process.env.JWT_SECRET);
+      const token = jwt.default.sign({ id: user.id || user._id }, process.env.JWT_SECRET);
 
       const res = await request(app)
         .get('/api/auth/me')

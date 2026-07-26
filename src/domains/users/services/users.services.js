@@ -1,73 +1,73 @@
-import User from '../models/user.models.js';
-
-export const getUserById = async (userId) => {
-  return await User.findById(userId).select('-password');
-};
-
-export const getAllUsers = async ({ startDate, endDate, sortOrder = 'desc' } = {}) => {
-  const query = {};
-  if (startDate || endDate) {
-    query.createdAt = {};
-    if (startDate) query.createdAt.$gte = new Date(startDate);
-    if (endDate) query.createdAt.$lte = new Date(endDate);
+export class UsersService {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
   }
-  return await User.find(query)
-    .sort({ createdAt: sortOrder === 'asc' ? 1 : -1 })
-    .select('-password');
-};
 
-export const deleteUser = async (userId) => {
-  return await User.findByIdAndDelete(userId);
-};
-
-export const blockUser = async (userId, isBlocked) => {
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { isBlocked },
-    { new: true },
-  );
-  if (!user) {
-    const error = new Error('Usuario no encontrado');
-    error.statusCode = 404;
-    throw error;
+  async getUserById(userId) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) return null;
+    const { password, ...rest } = user;
+    return { ...rest, id: user.id || user._id };
   }
-  // Si se bloquea, invalidamos sesiones (refresh tokens)
-  if (isBlocked) {
-    user.refreshTokens = [];
-    await user.save();
-  }
-  return user;
-};
 
-export const getUserStats = async () => {
-  const total = await User.countDocuments();
-  const last24h = await User.countDocuments({
-    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-  });
-  const blocked = await User.countDocuments({ isBlocked: true });
-  return { total, last24h, blocked };
-};
-
-export const verifyUserManual = async (userId, isVerified) => {
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { isVerified },
-    { new: true },
-  );
-  if (!user) {
-    const error = new Error('Usuario no encontrado');
-    error.statusCode = 404;
-    throw error;
+  async getAllUsers({ startDate, endDate, sortOrder = 'desc' } = {}) {
+    const where = {};
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.$gte = new Date(startDate);
+      if (endDate) where.createdAt.$lte = new Date(endDate);
+    }
+    const users = await this.userRepository.findAll(where, {
+      sort: { createdAt: sortOrder === 'asc' ? 1 : -1 },
+    });
+    return users.map((user) => {
+      const { password, ...rest } = user;
+      return { ...rest, id: user.id || user._id };
+    });
   }
-  return user;
-};
 
-export const updateUser = async (userId, data) => {
-  // Prevent password update here, it should be a separate flow
-  if (data.password) {
-    delete data.password;
+  async deleteUser(userId) {
+    return await this.userRepository.delete(userId);
   }
-  return await User.findByIdAndUpdate(userId, data, { new: true }).select(
-    '-password',
-  );
-};
+
+  async blockUser(userId, isBlocked) {
+    const user = await this.userRepository.update(userId, { isBlocked });
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      throw error;
+    }
+    if (isBlocked) {
+      user.refreshTokens = [];
+      await this.userRepository.save(user);
+    }
+    return { ...user, id: user.id || user._id };
+  }
+
+  async getUserStats() {
+    const total = await this.userRepository.count();
+    const last24h = await this.userRepository.countSince(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const blocked = await this.userRepository.count({ isBlocked: true });
+    return { total, last24h, blocked };
+  }
+
+  async verifyUserManual(userId, isVerified) {
+    const user = await this.userRepository.update(userId, { isVerified });
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      throw error;
+    }
+    return { ...user, id: user.id || user._id };
+  }
+
+  async updateUser(userId, data) {
+    if (data.password) {
+      delete data.password;
+    }
+    const user = await this.userRepository.update(userId, data);
+    if (!user) return null;
+    const { password, ...rest } = user;
+    return { ...rest, id: user.id || user._id };
+  }
+}

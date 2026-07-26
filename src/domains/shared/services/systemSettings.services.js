@@ -1,27 +1,19 @@
-import { SystemSettings } from '../models/systemSettings.model.js';
-
-let cachedSettings = null;
-
-const loadSettings = async () => {
-  let settings = await SystemSettings.findOne({});
-  if (!settings) {
-    settings = await SystemSettings.create({});
+export class SystemSettingsService {
+  constructor(systemSettingsRepository) {
+    this.systemSettingsRepository = systemSettingsRepository;
+    this.cachedSettings = null;
   }
-  cachedSettings = settings;
-};
 
-export const getSettings = async () => {
-  if (!cachedSettings) {
-    await loadSettings();
+  async getSettings() {
+    if (!this.cachedSettings) {
+      this.cachedSettings = await this.systemSettingsRepository.get();
+    }
+    return this.cachedSettings;
   }
-  return cachedSettings;
-};
 
-export const updateSettings = async (newSettings) => {
-  const settings = await SystemSettings.findOneAndUpdate({}, newSettings, {
-    new: true,
-    upsert: true,
-  });
-  cachedSettings = settings;
-  return settings;
-};
+  async updateSettings(newSettings) {
+    const settings = await this.systemSettingsRepository.upsert(newSettings);
+    this.cachedSettings = settings;
+    return settings;
+  }
+}

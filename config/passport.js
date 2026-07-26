@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import User from '../src/domains/users/models/user.models.js';
 import dotenv from 'dotenv';
+import { getRepositories } from '../src/factory.js';
 
 dotenv.config();
 
@@ -14,16 +14,16 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        const { userRepository } = await getRepositories();
+        let user = await userRepository.findByGoogleId(profile.id);
 
         if (!user) {
-          // If user doesn't exist, create one
-          user = await User.create({
+          user = await userRepository.create({
             googleId: profile.id,
             email: profile.emails[0].value,
             provider: 'google',
-            isVerified: true, // Google verified
-            password: 'google-oauth-user', // Temporary password
+            isVerified: true,
+            password: 'google-oauth-user',
           });
         }
         return done(null, user);

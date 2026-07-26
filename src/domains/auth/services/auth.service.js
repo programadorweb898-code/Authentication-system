@@ -55,13 +55,22 @@ export class AuthService {
   // --- Public Methods ---
 
   async registerUser({ email, password, phone, verificationMethod = 'email' }) {
+    const existing = await this.userRepository.findByEmail(email);
+    if (existing) {
+      const error = new Error('El usuario ya existe');
+      error.statusCode = 409;
+      throw error;
+    }
+
     const code = this._generateOTP();
     const hashCode = await this.passwordHasher.hash(code);
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    const expires = new Date(Date.now() + 10 * 60 * 1000);
+
+    const hashedPassword = await this.passwordHasher.hash(password);
 
     const newUser = await this.userRepository.create({
       email,
-      password,
+      password: hashedPassword,
       phone,
       verificationCode: hashCode,
       verificationCodeExpires: expires,
@@ -329,7 +338,8 @@ export class AuthService {
       throw error;
     }
 
-    user.password = newPassword;
+    const hashedNewPassword = await this.passwordHasher.hash(newPassword);
+    user.password = hashedNewPassword;
     user.refreshTokens = [];
     await this.userRepository.save(user);
     logger.info('Contraseña actualizada correctamente', { userId });

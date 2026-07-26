@@ -1,17 +1,20 @@
-import { getAuthService } from '../../src/domains/auth/services/auth.factory.js';
+import bcrypt from 'bcryptjs';
+import { getRepositories } from '../../src/factory.js';
 
 export const createUser = async (overrides = {}) => {
-  const authService = await getAuthService();
-  const userRepository = authService.userRepository;
-  
-  const defaultData = {
+  const rawPassword = overrides.password || 'Password123!';
+  const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+  const { userRepository } = await getRepositories();
+
+  const { password: _omitted, ...restOverrides } = overrides;
+
+  const userData = {
     email: `test-${Date.now()}@example.com`,
-    password: 'Password123!',
-    isVerified: true
+    isVerified: true,
+    ...restOverrides,
+    password: hashedPassword,
   };
 
-  const userData = { ...defaultData, ...overrides };
-
-  // Usamos el repositorio para crear el usuario, garantizando compatibilidad con cualquier DB
   return await userRepository.create(userData);
 };

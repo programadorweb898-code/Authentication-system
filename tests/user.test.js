@@ -12,7 +12,7 @@ describe('User Profile Flow', () => {
       email: 'user@example.com',
       password: 'Password123!',
     });
-    token = jwt.sign({ id: testUser._id }, process.env.JWT_SECRET);
+    token = jwt.sign({ id: testUser.id || testUser._id }, process.env.JWT_SECRET);
   });
 
   describe('GET /api/users/me', () => {

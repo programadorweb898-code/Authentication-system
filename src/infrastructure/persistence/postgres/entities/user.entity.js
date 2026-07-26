@@ -21,7 +21,7 @@ export class User {
   @Column({ nullable: true })
   phone?: string;
 
-  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user, { cascade: true })
   refreshTokens: RefreshToken[];
 
   @Column({ nullable: true })

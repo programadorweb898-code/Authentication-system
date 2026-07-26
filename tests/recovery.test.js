@@ -1,10 +1,9 @@
 import request from 'supertest';
 import app from '../src/app.js';
-import User from '../src/domains/users/models/user.models.js';
+import { getRepositories } from '../src/factory.js';
 import { createUser } from './factories/user.factory.js';
 import { jest } from '@jest/globals';
 
-// Mock notification services
 jest.unstable_mockModule(
   '../src/domains/notifications/services/email.services.js',
   () => ({
@@ -37,7 +36,8 @@ describe('Recovery Flow', () => {
         'Código de recuperación enviado correctamente',
       );
 
-      const user = await User.findOne({ email });
+      const { userRepository } = await getRepositories();
+      const user = await userRepository.findByEmail(email);
       expect(user.recoveryCode).toBeDefined();
       expect(user.recoveryCodeExpires).toBeDefined();
     });
@@ -56,17 +56,17 @@ describe('Recovery Flow', () => {
 
   describe('POST /api/recovery/verifyCode', () => {
     it('should verify code successfully', async () => {
-      // First generate code (this sets required fields in DB)
       await request(app)
         .post('/api/recovery/recoveryCode')
         .send({ method: 'email', email });
 
-      const user = await User.findOne({ email });
+      const { userRepository } = await getRepositories();
       const bcrypt = await import('bcryptjs');
       const code = '123456';
+      const user = await userRepository.findByEmail(email);
       user.recoveryCode = await bcrypt.default.hash(code, 10);
       user.recoveryCodeExpires = new Date(Date.now() + 10000);
-      await user.save();
+      await userRepository.save(user);
 
       const resActual = await request(app)
         .post('/api/recovery/verifyCode')
@@ -88,16 +88,19 @@ describe('Recovery Flow', () => {
       expect(res.status).toBe(400);
       expect(res.body.error.toLowerCase()).toBe('código inválido');
 
-      const user = await User.findOne({ email });
+      const { userRepository } = await getRepositories();
+      const user = await userRepository.findByEmail(email);
       expect(user.recoveryAttempts).toBe(1);
     });
 
     it('should lock after too many attempts', async () => {
-      const user = await User.findOne({ email });
-      user.recoveryAttempts = 3; // El servicio usa user.recoveryAttempts >= 3
+      const { userRepository } = await getRepositories();
+      const bcrypt = await import('bcryptjs');
+      const user = await userRepository.findByEmail(email);
+      user.recoveryAttempts = 3;
       user.recoveryCode = 'somehash';
       user.recoveryCodeExpires = new Date(Date.now() + 10000);
-      await user.save();
+      await userRepository.save(user);
 
       const res = await request(app)
         .post('/api/recovery/verifyCode')
@@ -112,12 +115,13 @@ describe('Recovery Flow', () => {
 
   describe('POST /api/recovery/reset-password', () => {
     it('should reset password successfully', async () => {
+      const { userRepository } = await getRepositories();
       const bcrypt = await import('bcryptjs');
       const code = '123456';
-      const user = await User.findOne({ email });
+      const user = await userRepository.findByEmail(email);
       user.recoveryCode = await bcrypt.default.hash(code, 10);
       user.recoveryCodeExpires = new Date(Date.now() + 10000);
-      await user.save();
+      await userRepository.save(user);
 
       const res = await request(app).post('/api/recovery/reset-password').send({
         method: 'email',
@@ -129,7 +133,7 @@ describe('Recovery Flow', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Contraseña actualizada correctamente');
 
-      const updatedUser = await User.findOne({ email });
+      const updatedUser = await userRepository.findByEmail(email);
       const isMatch = await bcrypt.default.compare(
         'NewPassword123!',
         updatedUser.password,
@@ -137,21 +141,21 @@ describe('Recovery Flow', () => {
       expect(isMatch).toBe(true);
       expect(updatedUser.recoveryCode).toBeNull();
     });
+
     it('should reset password successfully and invalidate refresh tokens', async () => {
-      // First, generate a recovery code
       await request(app)
         .post('/api/recovery/recoveryCode')
         .send({ method: 'email', email });
 
+      const { userRepository } = await getRepositories();
       const bcrypt = await import('bcryptjs');
       const code = '123456';
-      const user = await User.findOne({ email });
+      const user = await userRepository.findByEmail(email);
 
-      // Simulate an active session by adding a refresh token
       user.refreshTokens.push({ token: 'dummyRefreshToken123' });
       user.recoveryCode = await bcrypt.default.hash(code, 10);
-      user.recoveryCodeExpires = new Date(Date.now() + 10000); // 10 seconds validity
-      await user.save();
+      user.recoveryCodeExpires = new Date(Date.now() + 10000);
+      await userRepository.save(user);
 
       const res = await request(app).post('/api/recovery/reset-password').send({
         method: 'email',
@@ -163,14 +167,13 @@ describe('Recovery Flow', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Contraseña actualizada correctamente');
 
-      const updatedUser = await User.findOne({ email });
+      const updatedUser = await userRepository.findByEmail(email);
       const isMatch = await bcrypt.default.compare(
         'NewPassword123!',
         updatedUser.password,
       );
       expect(isMatch).toBe(true);
       expect(updatedUser.recoveryCode).toBeNull();
-      // Crucial: check if refresh tokens are invalidated
       expect(updatedUser.refreshTokens).toEqual([]);
     });
   });

@@ -30,6 +30,26 @@ class UserRepository {
   async save(user) {
     throw new Error('Method save must be implemented');
   }
+
+  async findAll(where = {}, options = {}) {
+    throw new Error('Method findAll must be implemented');
+  }
+
+  async delete(id) {
+    throw new Error('Method delete must be implemented');
+  }
+
+  async count(where = {}) {
+    throw new Error('Method count must be implemented');
+  }
+
+  async countSince(date) {
+    throw new Error('Method countSince must be implemented');
+  }
+
+  async findByGoogleId(googleId) {
+    throw new Error('Method findByGoogleId must be implemented');
+  }
 }
 
 export default UserRepository;

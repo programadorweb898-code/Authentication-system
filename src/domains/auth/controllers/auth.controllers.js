@@ -1,4 +1,4 @@
-import { getAuthService } from '../services/auth.factory.js';
+import { getAuthService } from '../../../factory.js';
 
 const getService = async () => await getAuthService();
 
@@ -116,7 +116,7 @@ export const googleAuthCallbackController = async (req, res, next) => {
       message: 'Autenticación con Google exitosa',
       accessToken,
       user: {
-        id: user._id,
+        id: user.id || user._id,
         email: user.email,
       },
     });

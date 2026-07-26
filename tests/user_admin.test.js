@@ -15,14 +15,14 @@ describe('Admin Authorization Flow', () => {
       password: 'Password123!',
       role: 'admin', // Asumiendo que el modelo acepta el campo role
     });
-    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET);
+    adminToken = jwt.sign({ id: adminUser.id || adminUser._id, role: adminUser.role }, process.env.JWT_SECRET);
 
     regularUser = await createUser({
       email: 'user@example.com',
       password: 'Password123!',
       role: 'user',
     });
-    regularToken = jwt.sign({ id: regularUser._id, role: regularUser.role }, process.env.JWT_SECRET);
+    regularToken = jwt.sign({ id: regularUser.id || regularUser._id, role: regularUser.role }, process.env.JWT_SECRET);
   });
 
   describe('GET /api/users/stats', () => {

@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../src/app.js';
-import User from '../src/domains/users/models/user.models.js';
+import { getRepositories } from '../src/factory.js';
 import { createUser } from './factories/user.factory.js';
 
 describe('Auth Flow', () => {
@@ -20,7 +20,8 @@ describe('Auth Flow', () => {
       expect(res.body.message).toContain('Código de verificación enviado');
       expect(res.body).toHaveProperty('email', registerData.email);
 
-      const user = await User.findOne({ email: registerData.email });
+      const { userRepository } = await getRepositories();
+      const user = await userRepository.findByEmail(registerData.email);
       expect(user).toBeTruthy();
     });
 
@@ -139,11 +140,10 @@ describe('Auth Flow', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toContain('actualizada correctamente');
 
-      // Verify that refresh tokens are invalidated
-      const updatedUserAfterChange = await User.findById(user._id).lean();
-      expect(updatedUserAfterChange.refreshTokens).toEqual([]);
+      const { userRepository } = await getRepositories();
+      const updatedUser = await userRepository.findById(user.id || user._id);
+      expect(updatedUser.refreshTokens).toEqual([]);
 
-      // Intentar login con la nueva contraseña
       const newLoginRes = await request(app)
         .post('/api/auth/login')
         .send({ email: registerData.email, password: 'NewPassword123!' });

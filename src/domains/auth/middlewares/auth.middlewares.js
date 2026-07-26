@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../../users/models/user.models.js';
-import { TokenBlacklist } from '../../../../domains/auth/models/tokenBlacklist.model.js';
+import { getRepositories } from '../../../factory.js';
 
 export const authMiddleware = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -12,8 +11,9 @@ export const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    // Verificar si el token está en la lista negra
-    const isBlacklisted = await TokenBlacklist.findOne({ token });
+    const { userRepository, tokenBlacklistRepository } = await getRepositories();
+
+    const isBlacklisted = await tokenBlacklistRepository.isBlacklisted(token);
     if (isBlacklisted) {
       const error = new Error('Token revocado');
       error.statusCode = 401;
@@ -21,7 +21,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await userRepository.findById(decoded.id);
 
     if (!user) {
       const error = new Error('Usuario no encontrado');
@@ -35,7 +35,7 @@ export const authMiddleware = async (req, res, next) => {
       return next(error);
     }
 
-    req.user = user;
+    req.user = { ...user, id: user.id || user._id };
     return next();
   } catch (_err) {
     const error = new Error('Token inválido o expirado');
