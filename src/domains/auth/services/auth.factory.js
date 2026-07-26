@@ -10,12 +10,9 @@ import { sendRecoverySMS } from '../../notifications/services/sms.services.js';
 import { AppDataSource } from '../../../infrastructure/persistence/postgres/data-source.js';
 
 let instance = null;
-let initialized = false;
-
 const initializePostgres = async () => {
-    if (!initialized) {
+    if (!AppDataSource.isInitialized) {
         await AppDataSource.initialize();
-        initialized = true;
     }
 };
 

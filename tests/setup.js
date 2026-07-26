@@ -17,7 +17,7 @@ beforeAll(async () => {
         console.log('Conectando a MongoDB en tests...');
         await mongoose.connect(process.env.MONGO_URI);
       }
-  } else {
+  } else if (dbType === 'postgres') {
       if (!AppDataSource.isInitialized) {
         console.log('Conectando a Postgres en tests...');
         await AppDataSource.initialize();
@@ -43,7 +43,8 @@ beforeEach(async () => {
       const entities = AppDataSource.entityMetadatas;
       for (const entity of entities) {
         const repository = AppDataSource.getRepository(entity.name);
-        await repository.clear(); // Truncate tables
+        const tableName = repository.metadata.tableName;
+        await AppDataSource.query(`TRUNCATE TABLE "${tableName}" CASCADE;`);
       }
   }
 });

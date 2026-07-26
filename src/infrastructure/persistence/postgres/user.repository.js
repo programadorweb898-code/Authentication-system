@@ -1,6 +1,6 @@
-import { AppDataSource } from '../data-source';
-import { User } from '../entities/user.entity';
-import UserRepository from '../../../domains/users/repositories/user.repository.interface';
+import { AppDataSource } from './data-source.js';
+import { User } from './entities/user.entity.js';
+import UserRepository from '../../../domains/users/repositories/user.repository.interface.js';
 
 export class PostgresUserRepository extends UserRepository {
   constructor() {

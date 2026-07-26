@@ -1,6 +1,6 @@
-import { AppDataSource } from '../data-source.js';
-import { TokenBlacklist } from '../entities/token_blacklist.entity.js';
-import TokenBlacklistRepository from '../../../domains/auth/repositories/token_blacklist.repository.interface.js';
+import { AppDataSource } from './data-source.js';
+import { TokenBlacklist } from './entities/token_blacklist.entity.js';
+import TokenBlacklistRepository from '../../../../domains/auth/repositories/token_blacklist.repository.interface.js';
 
 export class PostgresTokenBlacklistRepository extends TokenBlacklistRepository {
   constructor() {
