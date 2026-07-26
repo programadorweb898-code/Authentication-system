@@ -1,5 +1,6 @@
 export default {
   testEnvironment: 'node',
+  setupFiles: ['./tests/load-env.js'],
   setupFilesAfterEnv: ['./tests/setup.js'],
   verbose: true,
   forceExit: true,
