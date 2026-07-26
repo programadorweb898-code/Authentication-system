@@ -190,7 +190,19 @@ export const verify2FAController = async (req, res, next) => {
 
 export const setup2FAController = async (req, res, next) => {
   try {
-    return res.status(200).json({ message: 'Setup 2FA endpoint' });
+    const authService = await getService();
+    const result = await authService.setupMFA(req.user.id, req.body.type);
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const confirm2FASetupController = async (req, res, next) => {
+  try {
+    const authService = await getService();
+    const result = await authService.confirmMFASetup(req.user.id, req.body.code);
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }
@@ -198,7 +210,9 @@ export const setup2FAController = async (req, res, next) => {
 
 export const disable2FAController = async (req, res, next) => {
   try {
-    return res.status(200).json({ message: 'Disable 2FA endpoint' });
+    const authService = await getService();
+    const result = await authService.disableMFA(req.user.id, req.body.password);
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }

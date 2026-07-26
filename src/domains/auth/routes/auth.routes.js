@@ -3,6 +3,9 @@ import {
   validationRegister,
   validationLogin,
   validationChangePassword,
+  validationSetupMFA,
+  validationConfirmMFA,
+  validationDisableMFA,
 } from '../../users/validators/users.validators.js';
 import { validationFields } from '../../shared/middlewares/validatorFields.js';
 import {
@@ -16,6 +19,7 @@ import {
   changePasswordController,
   revokeTokenController,
   setup2FAController,
+  confirm2FASetupController,
   verify2FAController,
   disable2FAController,
 } from '../controllers/auth.controllers.js';
@@ -60,9 +64,10 @@ router.post('/logout', logoutControllers);
 router.post('/revoke-token', authMiddleware, revokeTokenController);
 
 // MFA routes
-router.post('/2fa/setup', authMiddleware, setup2FAController);
+router.post('/2fa/setup', authMiddleware, validationSetupMFA, validationFields, setup2FAController);
+router.post('/2fa/confirm-setup', authMiddleware, validationConfirmMFA, validationFields, confirm2FASetupController);
 router.post('/2fa/verify', verify2FAController);
-router.post('/2fa/disable', authMiddleware, disable2FAController);
+router.post('/2fa/disable', authMiddleware, validationDisableMFA, validationFields, disable2FAController);
 
 router.post(
   '/change-password',

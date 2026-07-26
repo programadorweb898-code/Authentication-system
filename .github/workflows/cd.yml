@@ -1,27 +1,13 @@
-name: CI
+name: CD
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
     branches: [main]
 
 env:
   NODE_VERSION: 20
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -55,6 +41,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
+      - run: npm run lint
       - run: npm test
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/backend_senior_test
@@ -63,3 +50,12 @@ jobs:
           JWT_REFRESH_SECRET: test_refresh_secret_key
           RESEND_API_KEY: re_test_123
           NODE_ENV: test
+
+  deploy:
+    name: Deploy to Render
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

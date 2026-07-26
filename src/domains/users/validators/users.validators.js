@@ -31,6 +31,33 @@ export const validationRegister = [
     }),
 ];
 
+export const validationSetupMFA = [
+  body('type')
+    .trim()
+    .notEmpty()
+    .withMessage('El tipo MFA es requerido')
+    .isIn(['app', 'sms'])
+    .withMessage('El tipo MFA debe ser "app" o "sms"'),
+];
+
+export const validationConfirmMFA = [
+  body('code')
+    .trim()
+    .notEmpty()
+    .withMessage('El código de verificación es requerido')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('El código debe tener 6 dígitos')
+    .isNumeric()
+    .withMessage('El código debe ser numérico'),
+];
+
+export const validationDisableMFA = [
+  body('password')
+    .trim()
+    .notEmpty()
+    .withMessage('La contraseña es requerida'),
+];
+
 export const validationChangePassword = [
   body('currentPassword')
     .trim()

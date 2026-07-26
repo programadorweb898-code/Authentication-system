@@ -1,3 +1,4 @@
+import speakeasy from 'speakeasy';
 import logger from '../../../../infrastructure/logger.js';
 
 /**
@@ -136,6 +137,15 @@ export class AuthService {
     await this.userRepository.save(user);
 
     if (user.is2FAEnabled) {
+      if (user.twoFAType === 'app') {
+        const mfaToken = this.tokenService.sign(
+          { id: user.id, mfaRequired: true },
+          process.env.JWT_SECRET,
+          { expiresIn: '5m' }
+        );
+        return { mfaRequired: true, mfaToken };
+      }
+
       const code = this._generateOTP();
       user.twoFASecret = await this.passwordHasher.hash(code);
       await this.userRepository.save(user);
@@ -170,10 +180,20 @@ export class AuthService {
       const user = await this.userRepository.findById(decoded.id);
       if (!user || !user.twoFASecret) throw new Error('Usuario inválido o MFA no configurado');
 
-      const isMatch = await this.passwordHasher.compare(code, user.twoFASecret);
-      if (!isMatch) throw new Error('Código de verificación incorrecto');
+      if (user.twoFAType === 'app') {
+        const verified = speakeasy.totp.verify({
+          secret: user.twoFASecret,
+          encoding: 'base32',
+          token: code,
+          window: 1,
+        });
+        if (!verified) throw new Error('Código de verificación incorrecto');
+      } else {
+        const isMatch = await this.passwordHasher.compare(code, user.twoFASecret);
+        if (!isMatch) throw new Error('Código de verificación incorrecto');
+        user.twoFASecret = null;
+      }
 
-      user.twoFASecret = null;
       await this.userRepository.save(user);
 
       return await this._generateAndStoreTokens(user);
@@ -345,6 +365,118 @@ export class AuthService {
     logger.info('Contraseña actualizada correctamente', { userId });
 
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  async setupMFA(userId, type) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (user.is2FAEnabled || (user.twoFASecret && user.twoFAType === 'app')) {
+      const error = new Error('El MFA ya está habilitado o hay una configuración pendiente');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (type === 'app') {
+      const secret = speakeasy.generateSecret({
+        name: `Authentication System (${user.email})`,
+        length: 20,
+      });
+
+      user.twoFASecret = secret.base32;
+      user.twoFAType = 'app';
+      await this.userRepository.save(user);
+
+      return {
+        secret: secret.base32,
+        qrCodeUrl: secret.otpauth_url,
+        message: 'Escanea el código QR con tu aplicación de autenticación',
+      };
+    }
+
+    user.twoFAType = 'sms';
+    await this.userRepository.save(user);
+
+    return { message: 'Tipo MFA configurado a SMS. Confirma para habilitar.' };
+  }
+
+  async confirmMFASetup(userId, code) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (user.is2FAEnabled) {
+      const error = new Error('El MFA ya está habilitado');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!user.twoFASecret) {
+      const error = new Error('No hay configuración MFA pendiente. Ejecuta setup primero.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (user.twoFAType === 'app') {
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFASecret,
+        encoding: 'base32',
+        token: code,
+        window: 1,
+      });
+      if (!verified) {
+        const error = new Error('Código de verificación incorrecto');
+        error.statusCode = 400;
+        throw error;
+      }
+    }
+
+    user.is2FAEnabled = true;
+    await this.userRepository.save(user);
+
+    return { message: 'MFA habilitado correctamente' };
+  }
+
+  async disableMFA(userId, password) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      const error = new Error('Usuario no encontrado');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (!user.is2FAEnabled) {
+      const error = new Error('El MFA no está habilitado');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!user.password && user.provider === 'google') {
+      const error = new Error('Las cuentas de Google no tienen contraseña. Contacta al administrador.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const isMatch = await this.passwordHasher.compare(password, user.password);
+    if (!isMatch) {
+      const error = new Error('La contraseña es incorrecta');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    user.is2FAEnabled = false;
+    user.twoFASecret = null;
+    user.twoFAType = 'app';
+    await this.userRepository.save(user);
+
+    return { message: 'MFA deshabilitado correctamente' };
   }
 
   async revokeToken(token) {

@@ -7,6 +7,5 @@ logs/
 *.log
 .DS_Store
 .vscode/
-/src/generated/prisma
-.env.test
-.env.test
+.env.local
+*.tsbuildinfo

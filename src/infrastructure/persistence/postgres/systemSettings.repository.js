@@ -20,7 +20,7 @@ export class PostgresSystemSettingsRepository extends SystemSettingsRepository {
   async upsert(data) {
     let settings = await this.repository.findOne({ where: {} });
     if (settings) {
-      await this.repository.update(settings.id, data);
+      Object.assign(settings, data);
     } else {
       settings = this.repository.create(data);
     }
