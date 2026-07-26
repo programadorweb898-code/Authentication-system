@@ -56,7 +56,7 @@ This document outlines the current state of the authentication domain and propos
     4.  **Passport Configuration:** Set up Google Strategy in `src/config/passport.js`.
     5.  **Auth Routes:** Add routes for Google login initiation and callback in `src/domains/auth/routes/auth.routes.js`.
     6.  **Auth Controllers:** Handle OAuth flow in `src/domains/auth/controllers/auth.controllers.js`.
-    7.  **Auth Services:** Implement user handling (find/create) from Google profile in `src/domains/auth/services/auth.services.js`.
+    7.  **Auth Services:** Implement user handling (find/create) from Google profile in `src/domains/auth/services/auth.service.js`.
 
 ## Next Steps (Prioritized)
 

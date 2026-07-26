@@ -11,4 +11,7 @@ export default {
     '^@infrastructure/(.*)$': '<rootDir>/infrastructure/$1',
     '^@domains/(.*)$': '<rootDir>/src/domains/$1',
   },
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
 };

@@ -1,18 +1,17 @@
-import User from '../../src/domains/users/models/user.models.js';
+import { getAuthService } from '../../src/domains/auth/services/auth.factory.js';
 
 export const createUser = async (overrides = {}) => {
+  const authService = await getAuthService();
+  const userRepository = authService.userRepository;
+  
   const defaultData = {
     email: `test-${Date.now()}@example.com`,
     password: 'Password123!',
+    isVerified: true
   };
 
   const userData = { ...defaultData, ...overrides };
 
-  // Si el password no está hasheado, lo hasheamos (asumiendo que el modelo no lo hace automáticamente o queremos control)
-  // Nota: En un sistema real el modelo suele tener un pre-save hook.
-  // Pero aquí crearemos el usuario directamente.
-
-  const user = new User(userData);
-  await user.save();
-  return user;
+  // Usamos el repositorio para crear el usuario, garantizando compatibilidad con cualquier DB
+  return await userRepository.create(userData);
 };

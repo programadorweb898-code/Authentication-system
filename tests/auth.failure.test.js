@@ -1,10 +1,18 @@
 import request from 'supertest';
 import app from '../src/app.js';
 import { jest } from '@jest/globals';
-import * as authServices from '../src/domains/auth/services/auth.services.js';
+import { authService } from '../src/domains/auth/services/auth.factory.js';
 
-// Mockear el módulo de servicios de auth
-jest.mock('../src/domains/auth/services/auth.services.js');
+// Mockear el factory de servicios de auth
+jest.mock('../src/domains/auth/services/auth.factory.js', () => {
+  const { jest } = require('@jest/globals');
+  return {
+    authService: {
+      registerUser: jest.fn(),
+      loginUser: jest.fn(),
+    },
+  };
+});
 
 describe('Auth Failure Flow', () => {
   const registerData = {
@@ -16,7 +24,7 @@ describe('Auth Failure Flow', () => {
   describe('POST /api/auth/register - Infrastructure Failures', () => {
     it('should return 500 if notification service fails', async () => {
       // Configurar el mock para lanzar un error
-      authServices.registerUser.mockRejectedValueOnce(new Error('Resend API Error'));
+      authService.registerUser.mockRejectedValueOnce(new Error('Resend API Error'));
 
       const res = await request(app)
         .post('/api/auth/register')
@@ -27,7 +35,7 @@ describe('Auth Failure Flow', () => {
 
     it('should return 500 if database fails during user creation', async () => {
       // Configurar el mock para lanzar un error
-      authServices.registerUser.mockRejectedValueOnce(new Error('DB Connection Error'));
+      authService.registerUser.mockRejectedValueOnce(new Error('DB Connection Error'));
 
       const res = await request(app)
         .post('/api/auth/register')

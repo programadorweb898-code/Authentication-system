@@ -1,20 +1,11 @@
-import jwt from 'jsonwebtoken';
-import {
-  registerUser,
-  loginUser,
-  logoutUser,
-  refreshAccessToken,
-  verifyAccount,
-  resendVerificationCode,
-  googleAuthSuccess,
-  changePassword,
-  revokeToken,
-  verifyMFA,
-} from '../services/auth.services.js';
+import { getAuthService } from '../services/auth.factory.js';
+
+const getService = async () => await getAuthService();
 
 export const registerControllers = async (req, res, next) => {
   try {
-    const response = await registerUser(req.body);
+    const authService = await getService();
+    const response = await authService.registerUser(req.body);
     return res.status(201).json(response);
   } catch (err) {
     return next(err);
@@ -23,7 +14,8 @@ export const registerControllers = async (req, res, next) => {
 
 export const verifyAccountController = async (req, res, next) => {
   try {
-    const response = await verifyAccount(req.body);
+    const authService = await getService();
+    const response = await authService.verifyAccount(req.body);
     return res.status(200).json(response);
   } catch (err) {
     return next(err);
@@ -32,7 +24,8 @@ export const verifyAccountController = async (req, res, next) => {
 
 export const resendVerificationCodeController = async (req, res, next) => {
   try {
-    const response = await resendVerificationCode(req.body);
+    const authService = await getService();
+    const response = await authService.resendVerificationCode(req.body);
     return res.status(200).json(response);
   } catch (err) {
     return next(err);
@@ -41,7 +34,8 @@ export const resendVerificationCodeController = async (req, res, next) => {
 
 export const loginControllers = async (req, res, next) => {
   try {
-    const result = await loginUser(req.body);
+    const authService = await getService();
+    const result = await authService.loginUser(req.body);
 
     if (result.mfaRequired) {
       return res.status(200).json({
@@ -73,7 +67,8 @@ export const loginControllers = async (req, res, next) => {
 
 export const refreshTokenControllers = async (req, res, next) => {
   try {
-    const { accessToken, refreshToken } = await refreshAccessToken(
+    const authService = await getService();
+    const { accessToken, refreshToken } = await authService.refreshAccessToken(
       req.cookies.refreshToken,
     );
 
@@ -92,11 +87,12 @@ export const refreshTokenControllers = async (req, res, next) => {
 
 export const logoutControllers = async (req, res, next) => {
   try {
+    const authService = await getService();
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (token) {
-      await revokeToken(token);
+      await authService.revokeToken(token);
     }
-    await logoutUser(req.cookies.refreshToken);
+    await authService.logoutUser(req.cookies.refreshToken);
     res.clearCookie('refreshToken');
     return res.json({ message: 'Sesión cerrada correctamente' });
   } catch (err) {
@@ -106,7 +102,8 @@ export const logoutControllers = async (req, res, next) => {
 
 export const googleAuthCallbackController = async (req, res, next) => {
   try {
-    const { accessToken, refreshToken, user } = await googleAuthSuccess(req.user);
+    const authService = await getService();
+    const { accessToken, refreshToken, user } = await authService.googleAuthSuccess(req.user);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -115,8 +112,6 @@ export const googleAuthCallbackController = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // En un entorno real, redirigirías a tu frontend con los tokens.
-    // Por ahora, enviamos una respuesta JSON o redirigimos a una página de éxito.
     res.status(200).json({
       message: 'Autenticación con Google exitosa',
       accessToken,
@@ -132,10 +127,11 @@ export const googleAuthCallbackController = async (req, res, next) => {
 
 export const changePasswordController = async (req, res, next) => {
   try {
-    const response = await changePassword(req.user.id, req.body);
+    const authService = await getService();
+    const response = await authService.changePassword(req.user.id, req.body);
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (token) {
-      await revokeToken(token);
+      await authService.revokeToken(token);
     }
     return res.status(200).json(response);
   } catch (err) {
@@ -145,6 +141,7 @@ export const changePasswordController = async (req, res, next) => {
 
 export const revokeTokenController = async (req, res, next) => {
   try {
+    const authService = await getService();
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
       const error = new Error('Token requerido');
@@ -152,26 +149,16 @@ export const revokeTokenController = async (req, res, next) => {
       throw error;
     }
 
-    // Decodificar el token para verificar propiedad
-    const decoded = jwt.decode(token);
+    const decoded = authService.tokenService.decode(token);
     
-    // Si no es admin, verificar que el dueño del token es el usuario autenticado
     if (req.user.role !== 'admin' && decoded?.id !== req.user.id) {
       const error = new Error('No tienes permiso para revocar este token');
       error.statusCode = 403;
       throw error;
     }
 
-    await revokeToken(token);
+    await authService.revokeToken(token);
     return res.status(200).json({ message: 'Token revocado correctamente' });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-export const setup2FAController = async (req, res, next) => {
-  try {
-    return res.status(200).json({ message: 'Setup 2FA endpoint' });
   } catch (err) {
     return next(err);
   }
@@ -179,8 +166,9 @@ export const setup2FAController = async (req, res, next) => {
 
 export const verify2FAController = async (req, res, next) => {
   try {
+    const authService = await getService();
     const { mfaToken, code } = req.body;
-    const { accessToken, refreshToken, user } = await verifyMFA(mfaToken, code);
+    const { accessToken, refreshToken, user } = await authService.verifyMFA(mfaToken, code);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -195,6 +183,14 @@ export const verify2FAController = async (req, res, next) => {
       refreshToken,
       user,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const setup2FAController = async (req, res, next) => {
+  try {
+    return res.status(200).json({ message: 'Setup 2FA endpoint' });
   } catch (err) {
     return next(err);
   }
