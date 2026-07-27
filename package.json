@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/server.js",
+    "setup": "node scripts/setup-wizard.js",
     "dev": "nodemon ./src/server.js",
     "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
     "test:watch": "cross-env NODE_ENV=test jest --watchAll",
@@ -52,6 +53,7 @@
     "babel-plugin-transform-typescript-metadata": "^0.4.0",
     "cross-env": "^10.1.0",
     "eslint": "^10.3.0",
+    "fs-extra": "^11.4.0",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
     "jest-resolver-enhanced": "^1.1.0",
