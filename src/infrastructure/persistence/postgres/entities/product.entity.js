@@ -16,4 +16,13 @@ export class Product {
 
   @Column('text')
   description;
+
+  @Column('int', { default: 0 })
+  stock;
+
+  @Column('boolean', { default: true })
+  isActive;
+
+  @Column('varchar', { nullable: true })
+  imageUrl;
 }

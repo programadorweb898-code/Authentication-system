@@ -1,40 +1,49 @@
 import { ProductService } from '../services/products.service.js';
 import { CartService } from '../cart/services/cart.service.js';
+import { OrderService } from '../services/orders.service.js';
 
 export const ProductController = {
-  async getAll(req, res) {
+  async getAll(req, res, next) {
     try {
-      const { minPrice, maxPrice, category, sortBy, sortOrder } = req.query;
-      const products = await ProductService.findAll({ minPrice, maxPrice, category, sortBy, sortOrder });
-      res.json(products);
+      const { minPrice, maxPrice, category, sortBy, sortOrder, page, limit } = req.query;
+      const result = await ProductService.findAll({
+        minPrice, maxPrice, category, sortBy, sortOrder, page, limit,
+      });
+      res.json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Error fetching products' });
+      next(error);
     }
   },
 
-  async getOne(req, res) {
+  async getOne(req, res, next) {
     try {
       const product = await ProductService.findOne(req.params.id);
       if (!product) return res.status(404).json({ error: 'Product not found' });
       res.json(product);
     } catch (error) {
-      res.status(500).json({ error: 'Error fetching product' });
+      next(error);
     }
   },
 
-  async addToCart(req, res) {
+  async addToCart(req, res, next) {
     try {
       const { productId, quantity } = req.body;
       const userId = req.user.id;
       const item = await CartService.addItem(userId, productId, quantity || 1);
       res.status(201).json({ message: 'Product added to cart', item });
     } catch (error) {
-      res.status(500).json({ error: 'Error adding to cart' });
+      next(error);
     }
   },
 
-  async createOrder(req, res) {
-    res.status(201).json({ message: 'Order created', user: req.user.id });
+  async createOrder(req, res, next) {
+    try {
+      const { deliveryMethod, shippingAddressId, storeId } = req.body;
+      const order = await OrderService.createOrder(req.user.id, { deliveryMethod, shippingAddressId, storeId });
+      res.status(201).json({ message: 'Orden creada', order });
+    } catch (error) {
+      next(error);
+    }
   },
 
   async create(req, res, next) {
@@ -51,6 +60,16 @@ export const ProductController = {
       const product = await ProductService.update(req.params.id, req.body);
       if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
       res.json({ message: 'Producto actualizado', product });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async remove(req, res, next) {
+    try {
+      const product = await ProductService.softDelete(req.params.id);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      res.json({ message: 'Producto desactivado' });
     } catch (error) {
       next(error);
     }
@@ -73,5 +92,33 @@ export const ProductController = {
     } catch (error) {
       next(error);
     }
-  }
+  },
+
+  async getCart(req, res, next) {
+    try {
+      const items = await CartService.getCart(req.user.id);
+      res.json(items);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getMyOrders(req, res, next) {
+    try {
+      const orders = await OrderService.findByUser(req.user.id);
+      res.json(orders);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getOrderById(req, res, next) {
+    try {
+      const order = await OrderService.findById(req.params.id, req.user.id);
+      if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
+      res.json(order);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
