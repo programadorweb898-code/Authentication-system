@@ -1,31 +1,21 @@
-import { AppDataSource } from '../../../../infrastructure/persistence/postgres/data-source.js';
-import { CartItem } from '../../../../infrastructure/persistence/postgres/entities/cartItem.entity.js';
+export class CartService {
+  constructor(cartItemRepository) {
+    this.cartItemRepository = cartItemRepository;
+  }
 
-export const CartService = {
   async addItem(userId, productId, quantity) {
-    const repository = AppDataSource.getRepository(CartItem);
-    let item = await repository.findOne({ where: { userId, productId } });
-    if (item) {
-      item.quantity += quantity;
-    } else {
-      item = repository.create({ userId, productId, quantity });
-    }
-    return await repository.save(item);
-  },
+    return await this.cartItemRepository.addItem(userId, productId, quantity);
+  }
 
   async getCart(userId) {
-    const repository = AppDataSource.getRepository(CartItem);
-    return await repository.find({ where: { userId } });
-  },
+    return await this.cartItemRepository.findByUser(userId);
+  }
 
   async removeItem(userId, productId) {
-    const repository = AppDataSource.getRepository(CartItem);
-    const result = await repository.delete({ userId, productId });
-    return result.affected > 0;
-  },
+    return await this.cartItemRepository.removeItem(userId, productId);
+  }
 
   async clearCart(userId) {
-    const repository = AppDataSource.getRepository(CartItem);
-    await repository.delete({ userId });
+    await this.cartItemRepository.clearCart(userId);
   }
-};
+}

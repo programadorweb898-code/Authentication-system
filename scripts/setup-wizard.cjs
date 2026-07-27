@@ -16,6 +16,9 @@ async function readStdinLines(prompts) {
 }
 
 async function copyRecursive(src, dest, filter = () => true) {
+  const exists = await fs.pathExists(src);
+  if (!exists) return;
+
   await fs.ensureDir(dest);
   const entries = await fs.readdir(src, { withFileTypes: true });
 
@@ -42,12 +45,12 @@ async function runWizard() {
 
   const ecommerce = answers[0].toLowerCase() === 's';
   const dbType = answers[1].trim();
-  const templateDir = path.join(__dirname, '../template');
+  const projectRoot = path.join(__dirname, '..');
   const targetDir = process.cwd();
 
   console.log('\nConfigurando proyecto...');
 
-  await copyRecursive(templateDir, targetDir, (srcPath) => {
+  const filterFn = (srcPath) => {
     const normalized = srcPath.replace(/\\/g, '/');
     if (normalized.includes('infrastructure/persistence/')) {
       const parts = normalized.split('persistence/');
@@ -55,23 +58,22 @@ async function runWizard() {
     }
     if (normalized.includes('src/domains/ecommerce') && !ecommerce) return false;
     return true;
-  });
+  };
+
+  for (const dir of ['src', 'infrastructure', 'tests']) {
+    await copyRecursive(path.join(projectRoot, dir), path.join(targetDir, dir), filterFn);
+  }
 
   const appPath = path.join(targetDir, 'src/app.js');
   let appContent = await fs.readFile(appPath, 'utf8');
 
-  if (ecommerce) {
-    appContent = appContent.replace(
-      '// {{ECOMMERCE_IMPORT}}', 
-      "import ecommerceRoutes from './domains/ecommerce/routes/products.routes.js';"
-    );
-    appContent = appContent.replace(
-      '// {{ECOMMERCE_ROUTE}}', 
-      "app.use('/api/ecommerce', ecommerceRoutes);"
-    );
-  } else {
-    appContent = appContent.replace('// {{ECOMMERCE_IMPORT}}', '');
-    appContent = appContent.replace('// {{ECOMMERCE_ROUTE}}', '');
+  if (!ecommerce) {
+    appContent = appContent
+      .replace(/^import .* from '\.\/domains\/ecommerce\/.*';$/gm, '')
+      .replace(/^app\.use\('\/api\/products'.*;$/gm, '')
+      .replace(/^app\.use\('\/api\/addresses'.*;$/gm, '')
+      .replace(/^app\.use\('\/api\/stores'.*;$/gm, '')
+      .replace(/\n{3,}/g, '\n\n');
   }
 
   await fs.writeFile(appPath, appContent);
