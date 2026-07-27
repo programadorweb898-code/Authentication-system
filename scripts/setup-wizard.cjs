@@ -2,12 +2,18 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const readline = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const readline = require('readline');
 
-const question = (query) => new Promise((resolve) => readline.question(query, resolve));
+async function readStdinLines(prompts) {
+  const rl = readline.createInterface({ input: process.stdin });
+  const answers = [];
+  for await (const line of rl) {
+    answers.push(line);
+    if (answers.length >= prompts.length) break;
+  }
+  rl.close();
+  return answers;
+}
 
 async function copyRecursive(src, dest, filter = () => true) {
   await fs.ensureDir(dest);
@@ -30,29 +36,27 @@ async function copyRecursive(src, dest, filter = () => true) {
 async function runWizard() {
   console.log('--- Configuración del Proyecto ---');
 
-  const ecommerceRes = await question('¿Deseas habilitar el módulo de E-commerce? (s/n): ');
-  const dbType = await question('¿Qué base de datos deseas utilizar? (mongo/postgres): ');
+  console.log('¿Deseas habilitar el módulo de E-commerce? (s/n):');
+  console.log('¿Qué base de datos deseas utilizar? (mongo/postgres):');
+  const answers = await readStdinLines([1, 2]);
 
-  const ecommerce = ecommerceRes.toLowerCase() === 's';
+  const ecommerce = answers[0].toLowerCase() === 's';
+  const dbType = answers[1].trim();
   const templateDir = path.join(__dirname, '../template');
   const targetDir = process.cwd();
 
   console.log('\nConfigurando proyecto...');
 
-  // 1. Copiar estructura base excluyendo carpetas de persistencia no seleccionadas
   await copyRecursive(templateDir, targetDir, (srcPath) => {
-    // Filtrar carpetas de infraestructura no deseadas
-    if (srcPath.includes('infrastructure/persistence/')) {
-      const parts = srcPath.split('persistence/');
+    const normalized = srcPath.replace(/\\/g, '/');
+    if (normalized.includes('infrastructure/persistence/')) {
+      const parts = normalized.split('persistence/');
       if (parts[1] && !parts[1].startsWith(dbType)) return false;
     }
-    // Filtrar ecommerce si no se seleccionó
-    if (srcPath.includes('src/domains/ecommerce') && !ecommerce) return false;
-    
+    if (normalized.includes('src/domains/ecommerce') && !ecommerce) return false;
     return true;
   });
 
-  // 2. Ajustar app.js dinámicamente
   const appPath = path.join(targetDir, 'src/app.js');
   let appContent = await fs.readFile(appPath, 'utf8');
 
@@ -66,14 +70,12 @@ async function runWizard() {
       "app.use('/api/ecommerce', ecommerceRoutes);"
     );
   } else {
-    // Limpiar marcadores si no se eligió
     appContent = appContent.replace('// {{ECOMMERCE_IMPORT}}', '');
     appContent = appContent.replace('// {{ECOMMERCE_ROUTE}}', '');
   }
 
   await fs.writeFile(appPath, appContent);
 
-  readline.close();
   console.log('\n¡Proyecto configurado exitosamente!');
 }
 

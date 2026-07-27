@@ -1,9 +1,9 @@
-import { getRepository } from 'typeorm';
+import { AppDataSource } from '../../../../infrastructure/persistence/postgres/data-source.js';
 import { CartItem } from '../../../../infrastructure/persistence/postgres/entities/cartItem.entity.js';
 
 export const CartService = {
   async addItem(userId, productId, quantity) {
-    const repository = getRepository(CartItem);
+    const repository = AppDataSource.getRepository(CartItem);
     let item = await repository.findOne({ where: { userId, productId } });
     if (item) {
       item.quantity += quantity;
@@ -14,7 +14,7 @@ export const CartService = {
   },
 
   async getCart(userId) {
-    const repository = getRepository(CartItem);
+    const repository = AppDataSource.getRepository(CartItem);
     return await repository.find({ where: { userId } });
   }
 };

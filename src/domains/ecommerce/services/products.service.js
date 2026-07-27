@@ -1,9 +1,9 @@
-import { getRepository } from 'typeorm';
+import { AppDataSource } from '../../../infrastructure/persistence/postgres/data-source.js';
 import { Product } from '../../../infrastructure/persistence/postgres/entities/product.entity.js';
 
 export const ProductService = {
   async findAll({ minPrice, maxPrice, category, sortBy, sortOrder }) {
-    const repository = getRepository(Product);
+    const repository = AppDataSource.getRepository(Product);
     const queryBuilder = repository.createQueryBuilder('product');
 
     if (minPrice) queryBuilder.andWhere('product.price >= :minPrice', { minPrice });
@@ -18,7 +18,7 @@ export const ProductService = {
   },
 
   async findOne(id) {
-    const repository = getRepository(Product);
+    const repository = AppDataSource.getRepository(Product);
     return await repository.findOneBy({ id });
   }
 };

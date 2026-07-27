@@ -8,6 +8,7 @@ export default {
   resetMocks: true,
   restoreMocks: true,
   resolver: 'jest-resolver-enhanced',
+  testPathIgnorePatterns: ['/template/', '/node_modules/'],
   moduleNameMapper: {
     '^@infrastructure/(.*)$': '<rootDir>/infrastructure/$1',
     '^@domains/(.*)$': '<rootDir>/src/domains/$1',

@@ -5,7 +5,7 @@ export class CartItem {
   @PrimaryGeneratedColumn()
   id;
 
-  @Column('int')
+  @Column('uuid')
   userId;
 
   @Column('int')

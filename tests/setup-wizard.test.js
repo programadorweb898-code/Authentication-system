@@ -1,7 +1,9 @@
-const { spawnSync } = require('child_process');
-const fs = require('fs-extra');
-const path = require('path');
-const os = require('os');
+import { spawnSync } from 'child_process';
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+
+const setupWizardPath = path.resolve(process.cwd(), 'scripts/setup-wizard.cjs');
 
 describe('Wizard Setup Integration', () => {
   let tempDir;
@@ -15,9 +17,9 @@ describe('Wizard Setup Integration', () => {
   });
 
   test('Should generate Mongo structure without E-commerce', () => {
-    const result = spawnSync('node', [path.join(__dirname, '../scripts/setup-wizard.js')], {
+    spawnSync('node', [setupWizardPath], {
       cwd: tempDir,
-      input: 'n\nmongo\n', // Entradas: ecommerce=n, db=mongo
+      input: 'n\nmongo\n',
       encoding: 'utf-8'
     });
 
@@ -27,9 +29,9 @@ describe('Wizard Setup Integration', () => {
   });
 
   test('Should generate Postgres structure with E-commerce', () => {
-    const result = spawnSync('node', [path.join(__dirname, '../scripts/setup-wizard.js')], {
+    spawnSync('node', [setupWizardPath], {
       cwd: tempDir,
-      input: 's\npostgres\n', // Entradas: ecommerce=s, db=postgres
+      input: 's\npostgres\n',
       encoding: 'utf-8'
     });
 

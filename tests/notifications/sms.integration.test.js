@@ -1,6 +1,5 @@
-import { Queue, Worker } from '../../__mocks__/bullmq.js';
+import { Queue, Worker } from 'bullmq';
 import * as twilioAdapter from '@domains/notifications/adapters/sms/twilio.adapter.js';
-import { connection } from '../../infrastructure/redis.js';
 
 // Mockeamos el adaptador de Twilio
 jest.mock('@domains/notifications/adapters/sms/twilio.adapter.js', () => ({
@@ -15,7 +14,7 @@ describe('SMS Integration', () => {
     worker = new Worker(queueName, async (job) => {
         const { to, body } = job.data;
         return await twilioAdapter.sendSMS({ to, body });
-    }, { connection });
+    });
   });
 
   afterAll(async () => {
@@ -26,7 +25,7 @@ describe('SMS Integration', () => {
     const phone = '+123456789';
     const code = '654321';
     
-    const queue = new Queue(queueName, { connection });
+    const queue = new Queue(queueName);
     
     await queue.add('send-recovery-sms', { to: phone, body: `Tu código es ${code}` });
     await queue.close();
