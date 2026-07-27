@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import speakeasy from 'speakeasy';
 import logger from '../../../../infrastructure/logger.js';
 
@@ -37,7 +38,7 @@ export class AuthService {
     );
 
     const refreshToken = this.tokenService.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, jti: crypto.randomUUID() },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );

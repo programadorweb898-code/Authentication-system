@@ -20,5 +20,19 @@ export const ProductService = {
   async findOne(id) {
     const repository = AppDataSource.getRepository(Product);
     return await repository.findOneBy({ id });
+  },
+
+  async create(data) {
+    const repository = AppDataSource.getRepository(Product);
+    const product = repository.create(data);
+    return await repository.save(product);
+  },
+
+  async update(id, data) {
+    const repository = AppDataSource.getRepository(Product);
+    const product = await repository.findOneBy({ id });
+    if (!product) return null;
+    Object.assign(product, data);
+    return await repository.save(product);
   }
 };

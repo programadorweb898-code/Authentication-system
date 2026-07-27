@@ -35,5 +35,43 @@ export const ProductController = {
 
   async createOrder(req, res) {
     res.status(201).json({ message: 'Order created', user: req.user.id });
+  },
+
+  async create(req, res, next) {
+    try {
+      const product = await ProductService.create(req.body);
+      res.status(201).json({ message: 'Producto creado', product });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async update(req, res, next) {
+    try {
+      const product = await ProductService.update(req.params.id, req.body);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      res.json({ message: 'Producto actualizado', product });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async removeFromCart(req, res, next) {
+    try {
+      const removed = await CartService.removeItem(req.user.id, req.params.productId);
+      if (!removed) return res.status(404).json({ error: 'Producto no encontrado en el carrito' });
+      res.json({ message: 'Producto eliminado del carrito' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async clearCart(req, res, next) {
+    try {
+      await CartService.clearCart(req.user.id);
+      res.json({ message: 'Carrito vaciado' });
+    } catch (error) {
+      next(error);
+    }
   }
 };

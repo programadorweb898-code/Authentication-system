@@ -16,5 +16,16 @@ export const CartService = {
   async getCart(userId) {
     const repository = AppDataSource.getRepository(CartItem);
     return await repository.find({ where: { userId } });
+  },
+
+  async removeItem(userId, productId) {
+    const repository = AppDataSource.getRepository(CartItem);
+    const result = await repository.delete({ userId, productId });
+    return result.affected > 0;
+  },
+
+  async clearCart(userId) {
+    const repository = AppDataSource.getRepository(CartItem);
+    await repository.delete({ userId });
   }
 };

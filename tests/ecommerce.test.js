@@ -73,4 +73,68 @@ describe('Ecommerce Flow', () => {
       expect(res.status).toBe(401);
     });
   });
+
+  describe('DELETE /api/products/cart/:productId (Protected)', () => {
+    it('should remove a product from cart', async () => {
+      await request(app)
+        .post('/api/products/cart')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ productId: 1, quantity: 1 });
+
+      const res = await request(app)
+        .delete('/api/products/cart/1')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('eliminado');
+    });
+
+    it('should return 404 if product not in cart', async () => {
+      const res = await request(app)
+        .delete('/api/products/cart/999')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should return 401 if token is missing', async () => {
+      const res = await request(app).delete('/api/products/cart/1');
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 401 if token is invalid', async () => {
+      const res = await request(app)
+        .delete('/api/products/cart/1')
+        .set('Authorization', 'Bearer invalid_token');
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('DELETE /api/products/cart (Protected)', () => {
+    it('should clear the cart', async () => {
+      await request(app)
+        .post('/api/products/cart')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ productId: 1, quantity: 2 });
+
+      const res = await request(app)
+        .delete('/api/products/cart')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('vaciado');
+    });
+
+    it('should return 401 if token is missing', async () => {
+      const res = await request(app).delete('/api/products/cart');
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 401 if token is invalid', async () => {
+      const res = await request(app)
+        .delete('/api/products/cart')
+        .set('Authorization', 'Bearer invalid_token');
+      expect(res.status).toBe(401);
+    });
+  });
 });
