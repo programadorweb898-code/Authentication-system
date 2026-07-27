@@ -1,4 +1,5 @@
 import { ProductService } from '../services/products.service.js';
+import { CartService } from '../cart/services/cart.service.js';
 
 export const ProductController = {
   async getAll(req, res) {
@@ -22,7 +23,14 @@ export const ProductController = {
   },
 
   async addToCart(req, res) {
-    res.status(201).json({ message: 'Product added to cart', user: req.user.id });
+    try {
+      const { productId, quantity } = req.body;
+      const userId = req.user.id;
+      const item = await CartService.addItem(userId, productId, quantity || 1);
+      res.status(201).json({ message: 'Product added to cart', item });
+    } catch (error) {
+      res.status(500).json({ error: 'Error adding to cart' });
+    }
   },
 
   async createOrder(req, res) {

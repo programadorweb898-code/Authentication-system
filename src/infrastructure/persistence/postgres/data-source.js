@@ -5,13 +5,15 @@ import { RefreshToken } from "./entities/refresh_token.entity.js";
 import { TokenBlacklist } from "./entities/token_blacklist.entity.js";
 import { SystemSettings } from "./entities/system_settings.entity.js";
 import { AuditLog } from "./entities/audit_log.entity.js";
+import { Product } from "./entities/product.entity.js";
+import { CartItem } from "./entities/cartItem.entity.js";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
     url: process.env.DATABASE_URL,
     synchronize: true,
     logging: false,
-    entities: [User, RefreshToken, TokenBlacklist, SystemSettings, AuditLog],
+    entities: [User, RefreshToken, TokenBlacklist, SystemSettings, AuditLog, Product, CartItem],
     migrations: [],
     subscribers: [],
 });

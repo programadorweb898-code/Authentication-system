@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import authRoutes from './domains/auth/routes/auth.routes.js';
 import recoveryRoutes from './domains/recovery/routes/recovery.routes.js';
-import productsRoutes from './domains/products/routes/products.routes.js';
+import productsRoutes from './domains/ecommerce/routes/products.routes.js';
 import usersRoutes from './domains/users/routes/users.routes.js';
 import systemSettingsRoutes from './domains/shared/routes/systemSettings.routes.js';
 import morgan from 'morgan';

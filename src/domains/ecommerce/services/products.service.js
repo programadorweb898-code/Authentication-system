@@ -1,5 +1,5 @@
 import { getRepository } from 'typeorm';
-import { Product } from '../models/product.entity.js';
+import { Product } from '../../../infrastructure/persistence/postgres/entities/product.entity.js';
 
 export const ProductService = {
   async findAll({ minPrice, maxPrice, category, sortBy, sortOrder }) {

@@ -5,13 +5,13 @@ export class Product {
   @PrimaryGeneratedColumn()
   id;
 
-  @Column()
+  @Column('varchar')
   name;
 
   @Column('decimal')
   price;
 
-  @Column()
+  @Column('varchar')
   category;
 
   @Column('text')
