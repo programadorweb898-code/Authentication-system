@@ -311,7 +311,7 @@ Agents must NEVER:
 - communicate in any language other than Spanish.
 - instalar automáticamente dependencias o librerías. Cuando se requiera una, el agente debe informar al usuario especificando el nombre del paquete y el comando necesario, y esperar a que el usuario ejecute la instalación.
 - ejecutar `npm test` sin una solicitud explícita del usuario. El agente puede ejecutar este comando únicamente cuando el usuario lo pida directamente.
-
+-Debe usar la tool saveMessage del mcp conversation-memory-mcp en cada turno de interaccion con el usuario
 ---
 
 # Long-Term Goal

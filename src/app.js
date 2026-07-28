@@ -7,8 +7,10 @@ import addressesRoutes from './domains/ecommerce/routes/addresses.routes.js';
 import storesRoutes from './domains/ecommerce/routes/stores.routes.js';
 import usersRoutes from './domains/users/routes/users.routes.js';
 import systemSettingsRoutes from './domains/shared/routes/systemSettings.routes.js';
+import paymentRoutes from './domains/payments/routes/payment.routes.js';
 import morgan from 'morgan';
 import cors from 'cors';
+import webhookRoutes from './domains/payments/routes/webhook.routes.js';
 import { errorHandler } from './domains/shared/errors/errors.middlewares.js';
 import { notFound } from './domains/shared/middlewares/notFound.middlewares.js';
 import { maintenanceMiddleware } from './domains/shared/middlewares/maintenance.middlewares.js';
@@ -27,6 +29,7 @@ if (process.env.NODE_ENV !== 'test') {
 const app = express();
 
 app.use(cors());
+app.use('/api/payments/webhook', webhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -48,6 +51,7 @@ app.use('/api/addresses', addressesRoutes);
 app.use('/api/stores', storesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin/settings', systemSettingsRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

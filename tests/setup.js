@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { jest } from '@jest/globals';
-import { AppDataSource } from '../src/infrastructure/persistence/postgres/data-source';
+import { AppDataSource } from '../src/infrastructure/persistence/postgres/data-source.js';
 
 jest.mock('ioredis');
 jest.mock('bullmq');

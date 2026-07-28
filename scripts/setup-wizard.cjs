@@ -4,15 +4,12 @@ const fs = require('fs-extra');
 const path = require('path');
 const readline = require('readline');
 
-async function readStdinLines(prompts) {
-  const rl = readline.createInterface({ input: process.stdin });
-  const answers = [];
-  for await (const line of rl) {
-    answers.push(line);
-    if (answers.length >= prompts.length) break;
-  }
-  rl.close();
-  return answers;
+async function ask(query) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => rl.question(query + ' ', (answer) => {
+    rl.close();
+    resolve(answer.trim());
+  }));
 }
 
 async function copyRecursive(src, dest, filter = () => true) {
@@ -39,12 +36,12 @@ async function copyRecursive(src, dest, filter = () => true) {
 async function runWizard() {
   console.log('--- Configuración del Proyecto ---');
 
-  console.log('¿Deseas habilitar el módulo de E-commerce? (s/n):');
-  console.log('¿Qué base de datos deseas utilizar? (mongo/postgres):');
-  const answers = await readStdinLines([1, 2]);
-
-  const ecommerce = answers[0].toLowerCase() === 's';
-  const dbType = answers[1].trim();
+  const ecommerce = (await ask('¿Deseas habilitar el módulo de E-commerce? (s/n):')).toLowerCase() === 's';
+  let stripe = false;
+  if (ecommerce) {
+    stripe = (await ask('¿Deseas implementar el módulo de pagos con Stripe? (s/n):')).toLowerCase() === 's';
+  }
+  const dbType = await ask('¿Qué base de datos deseas utilizar? (mongo/postgres):');
   const projectRoot = path.join(__dirname, '..');
   const targetDir = process.cwd();
 
@@ -57,6 +54,7 @@ async function runWizard() {
       if (parts[1] && !parts[1].startsWith(dbType)) return false;
     }
     if (normalized.includes('src/domains/ecommerce') && !ecommerce) return false;
+    if (normalized.includes('domains/payments') && !stripe) return false;
     return true;
   };
 
@@ -77,6 +75,15 @@ async function runWizard() {
   }
 
   await fs.writeFile(appPath, appContent);
+
+  if (!stripe) {
+    appContent = appContent
+      .replace(/^import .* from '\.\/domains\/payments\/.*';$/gm, '')
+      .replace(/^app\.use\('\/api\/payments\/webhook'.*;$/gm, '')
+      .replace(/^app\.use\('\/api\/payments'.*;$/gm, '')
+      .replace(/\n{3,}/g, '\n\n');
+    await fs.writeFile(appPath, appContent);
+  }
 
   console.log('\n¡Proyecto configurado exitosamente!');
 }
