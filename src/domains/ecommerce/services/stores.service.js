@@ -1,5 +1,5 @@
-import { AppDataSource } from '../../../infrastructure/persistence/postgres/data-source.js';
-import { Store } from '../../../infrastructure/persistence/postgres/entities/store.entity.js';
+import { AppDataSource } from '../../../../infrastructure/database/data-source.js';
+import { Store } from '../../../../infrastructure/database/entities/store.entity.js';
 
 export const StoreService = {
   async create(data) {

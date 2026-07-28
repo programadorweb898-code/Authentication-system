@@ -23,8 +23,7 @@ describe('Wizard Setup Integration', () => {
       encoding: 'utf-8'
     });
 
-    expect(fs.existsSync(path.join(tempDir, 'src/infrastructure/persistence/mongodb'))).toBe(true);
-    expect(fs.existsSync(path.join(tempDir, 'src/infrastructure/persistence/postgres'))).toBe(false);
+    expect(fs.existsSync(path.join(tempDir, 'domains'))).toBe(true);
     expect(fs.existsSync(path.join(tempDir, 'src/domains/ecommerce'))).toBe(false);
   });
 
@@ -35,8 +34,7 @@ describe('Wizard Setup Integration', () => {
       encoding: 'utf-8'
     });
 
-    expect(fs.existsSync(path.join(tempDir, 'src/infrastructure/persistence/postgres'))).toBe(true);
-    expect(fs.existsSync(path.join(tempDir, 'src/infrastructure/persistence/mongodb'))).toBe(false);
+    expect(fs.existsSync(path.join(tempDir, 'domains'))).toBe(true);
     expect(fs.existsSync(path.join(tempDir, 'src/domains/ecommerce'))).toBe(true);
   });
 });

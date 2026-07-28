@@ -1,9 +1,20 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { jest } from '@jest/globals';
-import { AppDataSource } from '../src/infrastructure/persistence/postgres/data-source.js';
+import { AppDataSource } from '../infrastructure/database/data-source.js';
 
-jest.mock('ioredis');
+jest.mock('ioredis', () => {
+  const Redis = function () {};
+  const methods = {};
+  ['get', 'set', 'setex', 'del', 'incr', 'expire', 'ttl', 'quit', 'on', 'status', 'pipeline'].forEach(k => {
+    methods[k] = jest.fn();
+    if (['get', 'set', 'setex', 'del', 'incr', 'expire', 'ttl'].includes(k)) {
+      methods[k].mockResolvedValue(null);
+    }
+  });
+  Redis.prototype = methods;
+  return Redis;
+});
 jest.mock('bullmq');
 
 jest.mock('mongoose', () => {
@@ -53,20 +64,27 @@ jest.mock('mongoose', () => {
     Types: {
       ObjectId: function (id) { return id || '507f1f77bcf86cd799439011'; },
     },
-    model: () => ({
-      findById: (id) => mkQuery(baseUser),
-      findOne: () => mkQuery(baseUser),
-      findByIdAndUpdate: (id, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
-      findOneAndUpdate: (f, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
-      findByIdAndDelete: () => mkQuery({ deletedCount: 1 }),
-      create: (data) => Promise.resolve({ ...baseUser, ...data }),
-      find: () => mkQuery([baseUser]),
-      deleteOne: () => Promise.resolve({ deletedCount: 1 }),
-      deleteMany: () => Promise.resolve({ deletedCount: 1 }),
-      countDocuments: () => Promise.resolve(1),
-      updateOne: () => Promise.resolve({ modifiedCount: 1 }),
-      aggregate: () => Promise.resolve([]),
-    }),
+    model: () => {
+      const Model = function (data) {
+        Object.assign(this, data);
+      };
+      Model.prototype.save = function () { return Promise.resolve(this); };
+      Object.assign(Model, {
+        findById: (id) => mkQuery(baseUser),
+        findOne: () => mkQuery(baseUser),
+        findByIdAndUpdate: (id, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
+        findOneAndUpdate: (f, data) => mkQuery(() => ({ ...baseUser, ...data, save: baseUser.save })),
+        findByIdAndDelete: () => mkQuery({ deletedCount: 1 }),
+        create: (data) => Promise.resolve({ ...baseUser, ...data }),
+        find: () => mkQuery([baseUser]),
+        deleteOne: () => Promise.resolve({ deletedCount: 1 }),
+        deleteMany: () => Promise.resolve({ deletedCount: 1 }),
+        countDocuments: () => Promise.resolve(1),
+        updateOne: () => Promise.resolve({ modifiedCount: 1 }),
+        aggregate: () => Promise.resolve([]),
+      });
+      return Model;
+    },
     connection: { readyState: 1, collections: {} },
     connect: () => Promise.resolve(),
     disconnect: () => Promise.resolve(),

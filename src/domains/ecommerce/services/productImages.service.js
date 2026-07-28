@@ -1,6 +1,6 @@
-import { AppDataSource } from '../../../infrastructure/persistence/postgres/data-source.js';
-import { Product } from '../../../infrastructure/persistence/postgres/entities/product.entity.js';
-import { ProductImage } from '../../../infrastructure/persistence/postgres/entities/productImage.entity.js';
+import { AppDataSource } from '../../../../infrastructure/database/data-source.js';
+import { Product } from '../../../../infrastructure/database/entities/product.entity.js';
+import { ProductImage } from '../../../../infrastructure/database/entities/productImage.entity.js';
 
 const MAX_IMAGES_PER_PRODUCT = 5;
 const URL_REGEX = /^https?:\/\/[^\s"'<>]+$/;

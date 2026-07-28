@@ -1,5 +1,5 @@
 import paymentService from '../services/payment.service.js';
-import logger from '../../infrastructure/logger.js';
+import logger from '../../../infrastructure/logger.js';
 
 export const processPayment = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ export const processPayment = async (req, res) => {
     const payment = await paymentService.processPayment({ amount, currency, orderId });
     res.status(201).json(payment);
   } catch (error) {
-    logger.error('Error en PaymentController.processPayment', { error: error.message });
-    res.status(500).json({ error: 'Error interno al procesar el pago' });
+    logger.error('Error en PaymentController.processPayment', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: error.message });
   }
 };

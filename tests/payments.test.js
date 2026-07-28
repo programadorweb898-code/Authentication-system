@@ -6,7 +6,18 @@ import { authMiddleware } from '../src/domains/auth/middlewares/auth.middlewares
 
 // Mocks
 jest.mock('../infrastructure/services/stripe_service.js');
-jest.mock('../infrastructure/redis.js');
+jest.mock('../infrastructure/redis.js', () => {
+  const Redis = function () {};
+  const methods = {};
+  ['get', 'set', 'setex', 'del', 'incr', 'expire', 'ttl', 'quit', 'on', 'status', 'pipeline'].forEach(k => {
+    methods[k] = jest.fn();
+    if (['get', 'set', 'setex', 'del', 'incr', 'expire', 'ttl'].includes(k)) {
+      methods[k].mockResolvedValue(null);
+    }
+  });
+  Redis.prototype = methods;
+  return { connection: new Redis() };
+});
 jest.mock('../src/domains/auth/middlewares/auth.middlewares.js', () => ({
   authMiddleware: (req, res, next) => next(),
 }));
@@ -17,6 +28,10 @@ describe('Payment API', () => {
     currency: 'USD',
     orderId: '60d5ec49f1b2c6001f3e4e1a',
   };
+
+  beforeAll(() => {
+    process.env.DB_TYPE = 'mongo';
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();

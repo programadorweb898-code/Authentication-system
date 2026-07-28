@@ -1,5 +1,5 @@
-import { AppDataSource } from '../../../infrastructure/persistence/postgres/data-source.js';
-import { Address } from '../../../infrastructure/persistence/postgres/entities/address.entity.js';
+import { AppDataSource } from '../../../../infrastructure/database/data-source.js';
+import { Address } from '../../../../infrastructure/database/entities/address.entity.js';
 
 export const AddressService = {
   async create(userId, data) {

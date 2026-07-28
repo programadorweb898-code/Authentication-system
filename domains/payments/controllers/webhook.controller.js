@@ -1,4 +1,4 @@
-import { stripe } from '../../../infrastructure/services/stripe_service.js';
+import { getStripe } from '../../../infrastructure/services/stripe_service.js';
 import { getPaymentRepository } from '../payment.repository.factory.js';
 import logger from '../../../infrastructure/logger.js';
 
@@ -8,7 +8,7 @@ export const handleWebhook = async (req, res) => {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET

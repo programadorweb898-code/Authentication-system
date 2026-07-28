@@ -4,10 +4,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const readline = require('readline');
 
-async function ask(query) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+function ask(query) {
   return new Promise(resolve => rl.question(query + ' ', (answer) => {
-    rl.close();
     resolve(answer.trim());
   }));
 }
@@ -49,16 +49,14 @@ async function runWizard() {
 
   const filterFn = (srcPath) => {
     const normalized = srcPath.replace(/\\/g, '/');
-    if (normalized.includes('infrastructure/persistence/')) {
-      const parts = normalized.split('persistence/');
-      if (parts[1] && !parts[1].startsWith(dbType)) return false;
-    }
+    if (normalized.includes('/repositories/mongodb/') && dbType !== 'mongo') return false;
+    if (normalized.includes('/repositories/postgres/') && dbType !== 'postgres') return false;
     if (normalized.includes('src/domains/ecommerce') && !ecommerce) return false;
     if (normalized.includes('domains/payments') && !stripe) return false;
     return true;
   };
 
-  for (const dir of ['src', 'infrastructure', 'tests']) {
+  for (const dir of ['src', 'infrastructure', 'tests', 'domains']) {
     await copyRecursive(path.join(projectRoot, dir), path.join(targetDir, dir), filterFn);
   }
 
@@ -67,7 +65,7 @@ async function runWizard() {
 
   if (!ecommerce) {
     appContent = appContent
-      .replace(/^import .* from '\.\/domains\/ecommerce\/.*';$/gm, '')
+      .replace(/^import .* from '\.\.?\/domains\/ecommerce\/.*';$/gm, '')
       .replace(/^app\.use\('\/api\/products'.*;$/gm, '')
       .replace(/^app\.use\('\/api\/addresses'.*;$/gm, '')
       .replace(/^app\.use\('\/api\/stores'.*;$/gm, '')
@@ -78,7 +76,7 @@ async function runWizard() {
 
   if (!stripe) {
     appContent = appContent
-      .replace(/^import .* from '\.\/domains\/payments\/.*';$/gm, '')
+      .replace(/^import .* from '\.\.?\/domains\/payments\/.*';$/gm, '')
       .replace(/^app\.use\('\/api\/payments\/webhook'.*;$/gm, '')
       .replace(/^app\.use\('\/api\/payments'.*;$/gm, '')
       .replace(/\n{3,}/g, '\n\n');
@@ -86,6 +84,10 @@ async function runWizard() {
   }
 
   console.log('\n¡Proyecto configurado exitosamente!');
+  rl.close();
 }
 
-runWizard();
+runWizard().catch(e => {
+  console.error('Wizard error:', e);
+  process.exit(1);
+});

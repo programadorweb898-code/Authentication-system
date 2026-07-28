@@ -1,6 +1,6 @@
 import { getPaymentRepository } from '../payment.repository.factory.js';
-import stripeService from '../../infrastructure/services/stripe_service.js';
-import logger from '../../infrastructure/logger.js';
+import stripeService from '../../../infrastructure/services/stripe_service.js';
+import logger from '../../../infrastructure/logger.js';
 
 export class PaymentService {
   constructor() {

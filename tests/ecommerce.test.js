@@ -1,11 +1,11 @@
 import request from 'supertest';
 import app from '../src/app.js';
 import { createUser } from './factories/user.factory.js';
-import { AppDataSource } from '../src/infrastructure/persistence/postgres/data-source.js';
-import { Product } from '../src/infrastructure/persistence/postgres/entities/product.entity.js';
-import { ProductImage } from '../src/infrastructure/persistence/postgres/entities/productImage.entity.js';
-import { Address } from '../src/infrastructure/persistence/postgres/entities/address.entity.js';
-import { Store } from '../src/infrastructure/persistence/postgres/entities/store.entity.js';
+import { AppDataSource } from '../infrastructure/database/data-source.js';
+import { Product } from '../infrastructure/database/entities/product.entity.js';
+import { ProductImage } from '../infrastructure/database/entities/productImage.entity.js';
+import { Address } from '../infrastructure/database/entities/address.entity.js';
+import { Store } from '../infrastructure/database/entities/store.entity.js';
 import xlsx from 'xlsx';
 
 async function createTestProduct(overrides = {}) {
