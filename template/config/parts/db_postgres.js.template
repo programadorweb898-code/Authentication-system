@@ -1,0 +1,23 @@
+import pg from 'pg';
+import dotenv from 'dotenv';
+import logger from '../infrastructure/logger.js';
+
+dotenv.config();
+
+const { Pool } = pg;
+export const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+export const connectDb = async () => {
+  try {
+    await pgPool.query('SELECT NOW()');
+    logger.info('Conexión a PostgreSQL (Neon) correcta');
+  } catch (err) {
+    logger.error(`Error en la conexión a PostgreSQL: ${err.message}`);
+    process.exit(1);
+  }
+};

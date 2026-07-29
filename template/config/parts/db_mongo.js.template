@@ -1,0 +1,20 @@
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import logger from '../infrastructure/logger.js';
+
+dotenv.config();
+
+export const connectDb = async (retries = 5) => {
+  while (retries) {
+    try {
+      await mongoose.connect(process.env.MONGO_URI);
+      logger.info('Conexión a MongoDB correcta');
+      break;
+    } catch (err) {
+      retries -= 1;
+      logger.error(`Error en MongoDB:${err.message}. Reintentos: ${retries}`);
+      if (retries === 0) process.exit(1);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+};
